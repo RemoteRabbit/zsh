@@ -26,6 +26,7 @@ ENABLE_CORRECTION="true"
 COMPLETION_WAITING_DOTS="true"
 
 eval "$(starship init zsh)"
+eval "$(zoxide init zsh)"
 
 # Plugins
 for dir in $ZDOTDIR/shell-plugins/*; do
@@ -33,7 +34,7 @@ for dir in $ZDOTDIR/shell-plugins/*; do
   source $dir/$name.zsh
 done
 
-for file in $ZDOTDIR/shell-scripts/*; do
+for file in $ZDOTDIR/scripts/zsh/*; do
   source $file
 done
 

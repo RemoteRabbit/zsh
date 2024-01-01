@@ -1,6 +1,1 @@
-function tmuxSessionSwitch() {
-  session=$(tmux list-windows -a | fzf | sed 's/: .*//g')
-  tmux switch-client -t "$session"
-}
-
-alias tms=tmuxSessionSwitch
+alias tms=$ZDOTDIR/scripts/shell/session-wizard.sh
