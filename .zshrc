@@ -12,7 +12,9 @@
 #   tmux attach -t home || tmux new-session -s home -c $HOME
 # fi
 
-source $ZDOTDIR/aliases
+for file in $ZDOTDIR/alias/*; do
+  source $file
+done
 
 # Plugin for not needing to use cd and better tab completion
 setopt  autocd autopushd
@@ -26,10 +28,14 @@ COMPLETION_WAITING_DOTS="true"
 eval "$(starship init zsh)"
 
 # Plugins
-source $ZDOTDIR/shell-plugins/zsh-autosuggestions/zsh-autosuggestions.zsh
-source $ZDOTDIR/shell-plugins/zsh-vi-mode/zsh-vi-mode.zsh
-source $ZDOTDIR/shell-plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
-source $ZDOTDIR/shell-scripts/search.zsh
+for dir in $ZDOTDIR/shell-plugins/*; do
+  name=$(basename $dir)
+  source $dir/$name.zsh
+done
+
+for file in $ZDOTDIR/shell-scripts/*; do
+  source $file
+done
 
 # Exports
 export FZF_DEFAULT_OPTS='--height=70% --preview="cat {}" --preview-window=right:60%:wrap'
