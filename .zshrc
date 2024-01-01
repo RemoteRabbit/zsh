@@ -1,10 +1,10 @@
-# Used to check optimization
-zmodload zsh/zprof
-zmodload zsh/datetime
-setopt promptsubst
-PS4='+$EPOCHREALTIME %N:%i> '
-exec 3>&2 2> $ZDOTDIR/stats/startlog.$$
-setopt xtrace prompt_subst
+# # Used to check optimization
+# zmodload zsh/zprof
+# zmodload zsh/datetime
+# setopt promptsubst
+# PS4='+$EPOCHREALTIME %N:%i> '
+# exec 3>&2 2> $ZDOTDIR/stats/startlog.$$
+# setopt xtrace prompt_subst
 # -----------------------------------------
 # # Tmux start or attach
 # if [ ! "$TMUX" ]; then
@@ -38,7 +38,7 @@ export FZF_CTRL_T_COMMAND='$FZF_DEFAULT_COMMAND'
 
 pfetch
 
-# Used to check optimization
-unsetopt xtrace
-exec 2>&3 3>&-
-zprof > $ZDOTDIR/stats/zprof-stats
+# # Used to check optimization
+# unsetopt xtrace
+# exec 2>&3 3>&-
+# zprof > $ZDOTDIR/stats/zprof-stats
