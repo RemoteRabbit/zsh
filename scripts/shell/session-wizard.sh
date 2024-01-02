@@ -1,4 +1,3 @@
-
 #!/usr/bin/env bash
 
 # Usage: t <optional zoxide-like dir, relative or absolute path>

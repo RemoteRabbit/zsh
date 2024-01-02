@@ -28,6 +28,10 @@ COMPLETION_WAITING_DOTS="true"
 eval "$(starship init zsh)"
 eval "$(zoxide init zsh)"
 
+if [[ $(uname) == "Darwin" ]]; then
+  eval "$(/opt/homebrew/bin/brew shellenv)"
+fi
+
 # Plugins
 for dir in $ZDOTDIR/shell-plugins/*; do
   name=$(basename $dir)
