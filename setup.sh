@@ -1,4 +1,4 @@
-#! /bin/env bash
+#! /bin/bash
 
 ln -sf $HOME/repos/personal/zsh/.zshenv $HOME/.zshenv
 
