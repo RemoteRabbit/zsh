@@ -18,8 +18,8 @@ done
 
 # Plugin for not needing to use cd and better tab completion
 setopt  autocd autopushd
-autoload -U compinit
-compinit
+autoload -Uz compinit && compinit
+zstyle ':completion:*' matcher-list 'm:{a-z}={A-Za-z}'
 
 DISABLE_UPDATE_PROMPT="true"
 ENABLE_CORRECTION="true"
