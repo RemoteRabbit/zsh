@@ -35,5 +35,3 @@ export FZF_CTRL_T_COMMAND='$FZF_DEFAULT_COMMAND'
 if [[ $(uname) == "Darwin" ]]; then
 	eval "$(/opt/homebrew/bin/brew shellenv)"
 fi
-
-pfetch
