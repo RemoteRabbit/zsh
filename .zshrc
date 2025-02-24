@@ -2,6 +2,8 @@ for file in $ZDOTDIR/alias/*; do
   source $file
 done
 
+source $ZDOTDIR/sourcegraph
+
 setopt  autocd autopushd
 autoload -Uz compinit && compinit
 zstyle ':completion:*' matcher-list 'm:{a-z}={A-Za-z}'
@@ -31,6 +33,13 @@ done
 export FZF_DEFAULT_OPTS='--height=70% --preview="cat {}" --preview-window=right:60%:wrap'
 export FZF_DEFAULT_COMMAND='rg --files'
 export FZF_CTRL_T_COMMAND='$FZF_DEFAULT_COMMAND'
+export EDITOR=nvim
+
+export PNPM_HOME="/home/remoterabbit/.local/share/pnpm"
+case ":$PATH:" in
+  *":$PNPM_HOME:"*) ;;
+  *) export PATH="$PNPM_HOME:$PATH" ;;
+esac
 
 if [[ $(uname) == "Darwin" ]]; then
 	eval "$(/opt/homebrew/bin/brew shellenv)"
