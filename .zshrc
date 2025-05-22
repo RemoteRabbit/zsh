@@ -2,8 +2,6 @@ for file in $ZDOTDIR/alias/*; do
   source $file
 done
 
-source $ZDOTDIR/sourcegraph
-
 setopt  autocd autopushd
 autoload -Uz compinit && compinit
 zstyle ':completion:*' matcher-list 'm:{a-z}={A-Za-z}'
@@ -16,6 +14,7 @@ eval "$(starship init zsh)"
 eval "$(zoxide init zsh)"
 
 if [[ $(uname) == "Darwin" ]]; then
+  export PATH="/opt/homebrew/bin:$PATH"
   eval "$(/opt/homebrew/bin/brew shellenv)"
 fi
 
@@ -43,11 +42,4 @@ esac
 
 if [[ $(uname) == "Darwin" ]]; then
 	eval "$(/opt/homebrew/bin/brew shellenv)"
-fi
-
-if ! pgrep -u "$USER" ssh-agent > /dev/null; then
-    ssh-agent -t 1h > "$XDG_RUNTIME_DIR/ssh-agent.env"
-fi
-if [[ ! -f "$SSH_AUTH_SOCK" ]]; then
-    source "$XDG_RUNTIME_DIR/ssh-agent.env" >/dev/null
 fi
