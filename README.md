@@ -309,7 +309,7 @@ validate_config      # Check syntax
 
 ## 📝 License
 
-MIT License - feel free to use and modify as needed.
+Unlicense - This is free and unencumbered software released into the public domain.
 
 ## 🙏 Acknowledgments
 
