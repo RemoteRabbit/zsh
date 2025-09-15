@@ -60,14 +60,9 @@ COMPLETION_WAITING_DOTS="true"
 # Initialize tools (lightweight ones)
 eval "$(starship init zsh)"
 eval "$(zoxide init zsh)"
+eval "$(atuin init zsh)"
 
 # Lazy-load heavy tools
-_load_atuin() {
-  unfunction atuin
-  unfunction _load_atuin
-  eval "$(atuin init zsh)"
-  atuin "$@"
-}
 
 _load_carapace() {
   unfunction _load_carapace
@@ -76,8 +71,7 @@ _load_carapace() {
   source <(carapace _carapace)
 }
 
-# Create wrapper function for atuin
-atuin() { _load_atuin "$@"; }
+
 
 # Defer carapace loading slightly
 if command -v carapace &> /dev/null; then
