@@ -4,3 +4,10 @@ stats
 shell-plugins.backup/
 .zshrc.zinit-backup
 .elixir-tools/
+
+# Compiled
+*.zwc
+
+# Generated Files
+.zcompdump*
+.zsh_history
