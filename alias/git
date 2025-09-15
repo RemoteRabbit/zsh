@@ -1,0 +1,62 @@
+# Git aliases for better productivity
+alias g="git"
+alias ga="git add"
+alias gaa="git add --all"
+alias gap="git add --patch"
+alias gb="git branch"
+alias gba="git branch --all"
+alias gbd="git branch --delete"
+alias gc="git commit"
+alias gcm="git commit --message"
+alias gca="git commit --amend"
+alias gcf="git commit --fixup"
+alias gco="git checkout"
+alias gcob="git checkout -b"
+alias gd="git diff"
+alias gds="git diff --staged"
+alias gdt="git difftool"
+alias gf="git fetch"
+alias gfa="git fetch --all"
+alias gl="git log"
+alias glo="git log --oneline"
+alias glg="git log --graph --oneline --decorate"
+alias gm="git merge"
+alias gp="git push"
+alias gpf="git push --force-with-lease"
+alias gpl="git pull"
+alias gr="git rebase"
+alias gri="git rebase --interactive"
+alias gs="git status"
+alias gss="git status --short"
+alias gst="git stash"
+alias gstp="git stash pop"
+alias gstl="git stash list"
+alias gt="git tag"
+alias gw="git worktree"
+
+# Advanced git aliases
+alias gclean="git clean -fd"
+alias greset="git reset --hard"
+alias gundo="git reset --soft HEAD~1"
+alias gwip="git add -A && git commit -m 'WIP: work in progress'"
+alias gunwip="git log -n 1 | grep -q -c 'WIP' && git reset HEAD~1"
+
+# Git log shortcuts
+alias glp="git log --pretty=format:'%C(yellow)%h %C(blue)%ad %C(red)%an %C(green)%s' --date=short"
+alias gll="git log --graph --pretty=format:'%C(yellow)%h%C(red)%d %C(reset)%s %C(blue)[%an]' --abbrev-commit"
+
+# Show what changed
+alias gwhat="git show --name-only"
+alias gfiles="git diff --name-only"
+
+# Quick status check
+gcheck() {
+  echo "=== Repository Status ==="
+  git status --short
+  echo
+  echo "=== Recent commits ==="
+  git log --oneline -5
+  echo
+  echo "=== Current branch ==="
+  git branch --show-current
+}

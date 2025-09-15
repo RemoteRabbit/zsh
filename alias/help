@@ -1,0 +1,220 @@
+# Inline help system for custom zsh functions and aliases
+
+# Main help command
+zsh-help() {
+  if [[ $# -eq 0 ]]; then
+    echo "🐚 Zsh Configuration Help System"
+    echo "================================="
+    echo ""
+    echo "📁 Categories:"
+    echo "  zsh-help aliases      - Modern tool aliases and shortcuts"
+    echo "  zsh-help git          - Git aliases and functions"
+    echo "  zsh-help navigation   - Directory navigation helpers"
+    echo "  zsh-help productivity - Productivity functions"
+    echo "  zsh-help fzf          - Enhanced FZF functions"
+    echo "  zsh-help keybindings  - Custom key bindings"
+    echo "  zsh-help recovery     - Configuration recovery system"
+    echo "  zsh-help benchmark    - Performance benchmarking"
+    echo ""
+    echo "💡 Usage:"
+    echo "  zsh-help <category>   - Show help for specific category"
+    echo "  zsh-help search <term> - Search all help for term"
+    echo "  config-health         - Check configuration health"
+    echo "  zsh-benchmark         - Test shell startup performance"
+    return
+  fi
+
+  case "$1" in
+    aliases)
+      echo "🔗 Modern Tool Aliases"
+      echo "======================"
+      echo "ls, ll, la, lt    - Enhanced listing with eza (with fallbacks)"
+      echo "view              - View file with bat (syntax highlighting)"
+      echo "less              - Better pager with bat"
+      echo "grep              - Use ripgrep instead of grep"
+      echo "find              - Use fd instead of find"
+      echo "lsa, lla          - Versions with proper tab completion"
+      ;;
+    git)
+      echo "🌿 Git Aliases & Functions"
+      echo "=========================="
+      echo "g                 - git"
+      echo "ga, gaa, gap      - git add variants"
+      echo "gc, gcm, gca      - git commit variants"
+      echo "gd, gds, gdt      - git diff variants"
+      echo "gl, glo, glg      - git log variants"
+      echo "gs, gss           - git status variants"
+      echo "gcheck            - Show repository overview"
+      echo "glog              - Interactive git log with fzf"
+      ;;
+    navigation)
+      echo "🧭 Navigation Functions"
+      echo "======================="
+      echo ".., ..., ....     - Quick parent directory navigation"
+      echo "take <dir>        - Create directory and cd into it"
+      echo "repos, work, config - Zoxide shortcuts for common paths"
+      echo "goto-work, goto-personal - Jump to specific repo directories"
+      echo "j                 - Interactive directory jumper with fzf"
+      echo "ff                - Find and edit file with fzf"
+      echo "edit              - Smart editor function"
+      ;;
+    productivity)
+      echo "⚡ Productivity Functions"
+      echo "========================"
+      echo "pgrep <pattern>   - Search running processes"
+      echo "pkill-pattern <pattern> - Kill processes by pattern (with confirmation)"
+      echo "backup <file>     - Create timestamped backup"
+      echo "archive <src> <dest> - Create tar.gz, zip archives"
+      echo "extract <archive> - Smart archive extraction"
+      echo "sysinfo           - System information summary"
+      echo "port <number>     - Check if port is in use"
+      echo "weather [city]    - Get weather info"
+      ;;
+    fzf)
+      echo "🔍 Enhanced FZF Functions"
+      echo "========================="
+      echo "search <pattern>  - Search file contents with preview"
+      echo "f                 - File finder with actions"
+      echo "j                 - Interactive directory jumper"
+      echo "h                 - Interactive history search"
+      echo "pkill             - Interactive process killer"
+      echo "env-search        - Browse environment variables"
+      echo ""
+      echo "Key bindings in FZF:"
+      echo "Ctrl+/            - Toggle preview"
+      echo "Ctrl+U/D          - Preview page up/down"
+      echo "Ctrl+F/B          - Page down/up"
+      ;;
+    keybindings)
+      echo "⌨️  Custom Key Bindings"
+      echo "======================="
+      echo "Ctrl+F            - Quick file finder"
+      echo "Ctrl+J            - Quick directory jumper"
+      echo "Ctrl+G            - Start content search"
+      echo "Ctrl+R            - History search"
+      echo "Ctrl+Y            - Accept autosuggestion"
+      echo "Alt+R             - Reload configuration"
+      echo "Ctrl+S Ctrl+U     - Insert sudo at line start"
+      echo "jj, jk            - Exit vi insert mode"
+      echo "Ctrl+E            - Edit command in editor"
+      ;;
+    recovery)
+      echo "🚑 Configuration Recovery"
+      echo "========================="
+      echo "config-health     - Check configuration health"
+      echo "validate_config   - Test config syntax"
+      echo "backup_config     - Create configuration backup"
+      echo "restore_config    - Restore from backup"
+      echo "safe_reload       - Safely reload configuration"
+      echo "emergency_recovery - Reset to minimal working config"
+      echo "cleanup_backups   - Clean old backups (keep 10 newest)"
+      ;;
+    benchmark)
+      echo "📊 Performance Benchmarking"
+      echo "============================"
+      echo "zsh-benchmark     - Full startup time analysis"
+      echo "zsh-time          - Quick startup time check"
+      echo "zsh-profile       - Profile current session startup"
+      echo ""
+      echo "Environment variable:"
+      echo "ZSH_BENCHMARK=1   - Enable detailed profiling on startup"
+      ;;
+    search)
+      if [[ $# -lt 2 ]]; then
+        echo "Usage: zsh-help search <term>"
+        return 1
+      fi
+      echo "🔍 Searching help for: $2"
+      echo "=========================="
+      zsh-help aliases | grep -i "$2"
+      zsh-help git | grep -i "$2"
+      zsh-help navigation | grep -i "$2"
+      zsh-help productivity | grep -i "$2"
+      zsh-help fzf | grep -i "$2"
+      zsh-help keybindings | grep -i "$2"
+      zsh-help recovery | grep -i "$2"
+      zsh-help benchmark | grep -i "$2"
+      ;;
+    *)
+      echo "Unknown category: $1"
+      echo "Use 'zsh-help' to see available categories"
+      return 1
+      ;;
+  esac
+}
+
+# Quick function help
+help() {
+  if [[ $# -eq 0 ]]; then
+    echo "💡 Quick Help"
+    echo "============="
+    echo "help <function>   - Get help for specific function"
+    echo "zsh-help          - Full help system"
+    echo "which <command>   - Show command location/definition"
+    echo "type <command>    - Show command type and definition"
+    return
+  fi
+
+  local cmd="$1"
+
+  # Check if it's a function
+  if type "$cmd" 2>/dev/null | grep -q "is a function"; then
+    echo "📝 Function: $cmd"
+    echo "================="
+    type "$cmd" | sed '1d'
+    echo ""
+    echo "Use 'zsh-help' for more comprehensive help"
+  elif type "$cmd" 2>/dev/null | grep -q "is an alias"; then
+    echo "🔗 Alias: $cmd"
+    echo "============="
+    type "$cmd"
+  else
+    echo "Command: $cmd"
+    which "$cmd" 2>/dev/null || echo "Command not found: $cmd"
+  fi
+}
+
+# Show available custom functions
+list-functions() {
+  echo "🔧 Custom Functions Available"
+  echo "============================="
+  echo ""
+  echo "Navigation:"
+  echo "  goto-work, goto-personal, take, j, ff"
+  echo ""
+  echo "Productivity:"
+  echo "  pgrep, pkill-pattern, backup, archive, extract"
+  echo "  sysinfo, port, weather"
+  echo ""
+  echo "FZF Enhanced:"
+  echo "  search, glog, f, env-search"
+  echo ""
+  echo "Recovery:"
+  echo "  config-health, backup_config, restore_config"
+  echo "  safe_reload, emergency_recovery"
+  echo ""
+  echo "Benchmarking:"
+  echo "  zsh-benchmark, zsh-time, zsh-profile"
+  echo ""
+  echo "Use 'zsh-help <category>' for detailed help"
+}
+
+# Quick tips
+tips() {
+  local tips=(
+    "💡 Use 'j' without arguments for interactive directory selection"
+    "💡 Try 'search <pattern>' to find text in files with preview"
+    "💡 Use 'h' for interactive history search with fzf"
+    "💡 Run 'config-health' to check your zsh configuration"
+    "💡 Press 'jj' or 'jk' to exit vi insert mode quickly"
+    "💡 Use 'zsh-benchmark' to measure startup performance"
+    "💡 Try 'glog' for interactive git log with preview"
+    "💡 Use 'backup <file>' before making important changes"
+    "💡 Run 'emergency_recovery' if your config is broken"
+    "💡 Use 'note <text>' for quick note taking"
+  )
+
+  echo "💫 Random Tip:"
+  echo "==============="
+  echo "${tips[$((RANDOM % ${#tips[@]} + 1))]}"
+}

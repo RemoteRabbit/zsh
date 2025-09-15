@@ -1,1 +1,6 @@
 stats
+
+# Backup directories
+shell-plugins.backup/
+.zshrc.zinit-backup
+.elixir-tools/

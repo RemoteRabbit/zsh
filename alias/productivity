@@ -1,0 +1,171 @@
+# Productivity functions and shortcuts
+
+# Quick project navigation functions (use different names to avoid conflicts)
+goto-work() {
+  if [[ $# -eq 0 ]]; then
+    cd ~/repos/work && ls
+  else
+    cd ~/repos/work && cd "$1" && ls
+  fi
+}
+
+goto-personal() {
+  if [[ $# -eq 0 ]]; then
+    cd ~/repos/personal && ls
+  else
+    cd ~/repos/personal && cd "$1" && ls
+  fi
+}
+
+goto-open() {
+  if [[ $# -eq 0 ]]; then
+    cd ~/repos/open && ls
+  else
+    cd ~/repos/open && cd "$1" && ls
+  fi
+}
+
+# History search is handled in fzf-enhancements
+
+# Enhanced process management
+pgrep() {
+  if [[ $# -eq 0 ]]; then
+    echo "Usage: pgrep <pattern>"
+    return 1
+  fi
+  ps aux | rg "$1" | grep -v "rg $1"
+}
+
+# Interactive process killer is handled in fzf-enhancements
+# Simple process killer by pattern
+pkill-pattern() {
+  if [[ $# -eq 0 ]]; then
+    echo "Usage: pkill-pattern <pattern>"
+    return 1
+  fi
+
+  echo "Processes matching '$1':"
+  pgrep "$1"
+  echo ""
+  read "response?Kill these processes? (y/N): "
+  if [[ "$response" =~ ^[Yy]$ ]]; then
+    ps aux | rg "$1" | grep -v "rg $1" | awk '{print $2}' | xargs -I {} kill {}
+    echo "Processes killed."
+  else
+    echo "Cancelled."
+  fi
+}
+
+# Quick file operations
+backup() {
+  if [[ $# -eq 0 ]]; then
+    echo "Usage: backup <file>"
+    return 1
+  fi
+
+  for file in "$@"; do
+    if [[ -e "$file" ]]; then
+      cp "$file" "$file.bak.$(date +%Y%m%d_%H%M%S)"
+      echo "Backed up: $file"
+    else
+      echo "File not found: $file"
+    fi
+  done
+}
+
+# Quick archive creation
+archive() {
+  if [[ $# -ne 2 ]]; then
+    echo "Usage: archive <source> <archive_name>"
+    return 1
+  fi
+
+  local source="$1"
+  local archive_name="$2"
+
+  if [[ ! -e "$source" ]]; then
+    echo "Source not found: $source"
+    return 1
+  fi
+
+  case "$archive_name" in
+    *.tar.gz|*.tgz)
+      tar -czf "$archive_name" "$source"
+      ;;
+    *.tar.bz2)
+      tar -cjf "$archive_name" "$source"
+      ;;
+    *.zip)
+      zip -r "$archive_name" "$source"
+      ;;
+    *)
+      echo "Unsupported archive format. Use .tar.gz, .tar.bz2, or .zip"
+      return 1
+      ;;
+  esac
+
+  echo "Created archive: $archive_name"
+}
+
+# Quick extract
+extract() {
+  if [[ $# -ne 1 ]]; then
+    echo "Usage: extract <archive>"
+    return 1
+  fi
+
+  if [[ ! -f "$1" ]]; then
+    echo "Archive not found: $1"
+    return 1
+  fi
+
+  case "$1" in
+    *.tar.gz|*.tgz)  tar -xzf "$1" ;;
+    *.tar.bz2)       tar -xjf "$1" ;;
+    *.tar)           tar -xf "$1" ;;
+    *.zip)           unzip "$1" ;;
+    *.rar)           unrar x "$1" ;;
+    *.7z)            7z x "$1" ;;
+    *)               echo "Unsupported archive format: $1" ;;
+  esac
+}
+
+# System information
+sysinfo() {
+  echo "=== System Information ==="
+  echo "OS: $(uname -s -r)"
+  echo "Hostname: $(hostname)"
+  echo "Uptime: $(uptime | awk -F'up ' '{print $2}' | awk -F', load' '{print $1}')"
+  echo "Load: $(uptime | awk -F'load average:' '{print $2}')"
+  echo "Memory: $(free -h | grep '^Mem:' | awk '{print $3 "/" $2}')"
+  echo "Disk: $(df -h / | tail -1 | awk '{print $3 "/" $2 " (" $5 " used)"}')"
+  echo "Shell: $SHELL ($ZSH_VERSION)"
+}
+
+# Port checker
+port() {
+  if [[ $# -ne 1 ]]; then
+    echo "Usage: port <port_number>"
+    return 1
+  fi
+
+  local port="$1"
+  local result=$(netstat -ln | grep ":$port ")
+
+  if [[ -n "$result" ]]; then
+    echo "Port $port is in use:"
+    echo "$result"
+  else
+    echo "Port $port is available"
+  fi
+}
+
+# Weather check (requires curl)
+weather() {
+  local location="${1:-}"
+  if command -v curl &> /dev/null; then
+    curl -s "wttr.in/${location}?format=3"
+  else
+    echo "curl not available for weather check"
+  fi
+}
