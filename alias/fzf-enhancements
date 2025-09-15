@@ -6,7 +6,7 @@ search() {
     echo "Usage: search <pattern> [path]"
     return 1
   fi
-  
+
   local path=${2:-.}
   rg --color=always --line-number --no-heading --smart-case "$1" "$path" |
     fzf --ansi \
@@ -32,7 +32,7 @@ pkill() {
         --preview 'ps -f -p {1}' \
         --preview-window=down:3:wrap |
     awk '{print $1}')
-  
+
   if [[ -n "$pid" ]]; then
     echo "Killing process $pid..."
     kill "$pid"
@@ -57,7 +57,7 @@ h() {
   if [[ $# -eq 0 ]]; then
     # Interactive history search
     local cmd
-    cmd=$(history -n 1 | 
+    cmd=$(history -n 1 |
       fzf --tac --no-sort --exact \
           --header="Select command to run" \
           --preview 'echo {}' \
@@ -77,7 +77,7 @@ f() {
              --bind 'ctrl-y:execute-silent(echo {} | pbcopy)+abort' \
              --bind 'ctrl-d:execute(rm -i {})+reload($FZF_DEFAULT_COMMAND)' \
              --preview 'bat --color=always --style=numbers --line-range=:500 {}')
-  
+
   [[ -n "$file" ]] && echo "Selected: $file"
 }
 

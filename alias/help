@@ -23,7 +23,7 @@ zsh-help() {
     echo "  zsh-benchmark         - Test shell startup performance"
     return
   fi
-  
+
   case "$1" in
     aliases)
       echo "🔗 Modern Tool Aliases"
@@ -154,9 +154,9 @@ help() {
     echo "type <command>    - Show command type and definition"
     return
   fi
-  
+
   local cmd="$1"
-  
+
   # Check if it's a function
   if type "$cmd" 2>/dev/null | grep -q "is a function"; then
     echo "📝 Function: $cmd"
@@ -182,7 +182,7 @@ list-functions() {
   echo "Navigation:"
   echo "  goto-work, goto-personal, take, j, ff"
   echo ""
-  echo "Productivity:" 
+  echo "Productivity:"
   echo "  pgrep, pkill-pattern, backup, archive, extract"
   echo "  sysinfo, port, weather"
   echo ""
@@ -213,7 +213,7 @@ tips() {
     "💡 Run 'emergency_recovery' if your config is broken"
     "💡 Use 'note <text>' for quick note taking"
   )
-  
+
   echo "💫 Random Tip:"
   echo "==============="
   echo "${tips[$((RANDOM % ${#tips[@]} + 1))]}"

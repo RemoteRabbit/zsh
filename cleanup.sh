@@ -22,7 +22,7 @@ confirm() {
 # Clean backup directories
 cleanup_backups() {
     echo "📁 Cleaning backup directories..."
-    
+
     if [[ -d "$CONFIG_DIR/backups" ]]; then
         local backup_count=$(ls -1 "$CONFIG_DIR/backups" 2>/dev/null | wc -l)
         if [[ $backup_count -gt 0 ]]; then
@@ -46,7 +46,7 @@ cleanup_backups() {
 # Clean shell-plugins.backup if present
 cleanup_old_plugins() {
     echo "🔌 Cleaning old plugin directories..."
-    
+
     if [[ -d "$REPO_DIR/shell-plugins.backup" ]]; then
         if confirm "Remove old shell-plugins.backup directory?"; then
             rm -rf "$REPO_DIR/shell-plugins.backup"
@@ -60,11 +60,11 @@ cleanup_old_plugins() {
 # Clean compiled files and regenerate
 recompile_configs() {
     echo "⚙️  Recompiling configuration files..."
-    
+
     # Remove existing compiled files
     find "$CONFIG_DIR" -name "*.zwc" -type f -delete 2>/dev/null || true
     find "$REPO_DIR" -name "*.zwc" -type f -delete 2>/dev/null || true
-    
+
     # Recompile main configuration
     if command -v zsh &>/dev/null; then
         zsh -c "
@@ -82,14 +82,14 @@ recompile_configs() {
 # Clean completion cache
 clean_completion_cache() {
     echo "🔄 Cleaning completion cache..."
-    
+
     local cache_files=(
         "$HOME/.zcompdump"
         "$HOME/.zcompdump.zwc"
         "$CONFIG_DIR/.zcompdump"
         "$CONFIG_DIR/.zcompdump.zwc"
     )
-    
+
     local cleaned=0
     for cache_file in "${cache_files[@]}"; do
         if [[ -f "$cache_file" ]]; then
@@ -98,7 +98,7 @@ clean_completion_cache() {
             ((cleaned++))
         fi
     done
-    
+
     if [[ $cleaned -gt 0 ]]; then
         echo "✅ Cleaned $cleaned cache files"
     else
@@ -111,7 +111,7 @@ clean_completion_cache() {
 # Optimize Zinit
 optimize_zinit() {
     echo "⚡ Optimizing Zinit..."
-    
+
     if [[ -d "$HOME/.local/share/zinit" ]]; then
         if command -v zsh &>/dev/null; then
             echo "Updating Zinit and plugins..."
@@ -133,7 +133,7 @@ optimize_zinit() {
 # Validate configuration
 validate_config() {
     echo "✅ Validating configuration..."
-    
+
     if command -v zsh &>/dev/null; then
         if zsh -n "$CONFIG_DIR/.zshrc" 2>/dev/null; then
             echo "✅ Configuration syntax is valid"
@@ -152,26 +152,26 @@ main() {
     echo "Configuration directory: $CONFIG_DIR"
     echo "Repository directory: $REPO_DIR"
     echo ""
-    
+
     # Run cleanup operations
     cleanup_backups
     echo ""
-    
+
     cleanup_old_plugins
     echo ""
-    
+
     clean_completion_cache
     echo ""
-    
+
     recompile_configs
     echo ""
-    
+
     optimize_zinit
     echo ""
-    
+
     validate_config
     echo ""
-    
+
     echo "🎉 Cleanup complete!"
     echo ""
     echo "💡 Recommendations:"

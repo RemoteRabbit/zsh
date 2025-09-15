@@ -43,5 +43,5 @@ edit() {
 
 # Zoxide shortcuts for common directories
 alias repos="z repos"
-alias work="z work" 
+alias work="z work"
 alias config="z .config"

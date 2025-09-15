@@ -106,7 +106,7 @@ autoload -Uz _zinit
 
 # Load plugins with Zinit (fast, automatic updates)
 zinit light "zsh-users/zsh-autosuggestions"
-zinit light "zsh-users/zsh-syntax-highlighting" 
+zinit light "zsh-users/zsh-syntax-highlighting"
 zinit light "jeffreytse/zsh-vi-mode"
 
 # Auto-suggestions styling

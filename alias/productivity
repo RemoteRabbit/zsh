@@ -43,7 +43,7 @@ pkill-pattern() {
     echo "Usage: pkill-pattern <pattern>"
     return 1
   fi
-  
+
   echo "Processes matching '$1':"
   pgrep "$1"
   echo ""
@@ -62,7 +62,7 @@ backup() {
     echo "Usage: backup <file>"
     return 1
   fi
-  
+
   for file in "$@"; do
     if [[ -e "$file" ]]; then
       cp "$file" "$file.bak.$(date +%Y%m%d_%H%M%S)"
@@ -79,15 +79,15 @@ archive() {
     echo "Usage: archive <source> <archive_name>"
     return 1
   fi
-  
+
   local source="$1"
   local archive_name="$2"
-  
+
   if [[ ! -e "$source" ]]; then
     echo "Source not found: $source"
     return 1
   fi
-  
+
   case "$archive_name" in
     *.tar.gz|*.tgz)
       tar -czf "$archive_name" "$source"
@@ -103,7 +103,7 @@ archive() {
       return 1
       ;;
   esac
-  
+
   echo "Created archive: $archive_name"
 }
 
@@ -113,12 +113,12 @@ extract() {
     echo "Usage: extract <archive>"
     return 1
   fi
-  
+
   if [[ ! -f "$1" ]]; then
     echo "Archive not found: $1"
     return 1
   fi
-  
+
   case "$1" in
     *.tar.gz|*.tgz)  tar -xzf "$1" ;;
     *.tar.bz2)       tar -xjf "$1" ;;
@@ -148,10 +148,10 @@ port() {
     echo "Usage: port <port_number>"
     return 1
   fi
-  
+
   local port="$1"
   local result=$(netstat -ln | grep ":$port ")
-  
+
   if [[ -n "$result" ]]; then
     echo "Port $port is in use:"
     echo "$result"
@@ -169,5 +169,3 @@ weather() {
     echo "curl not available for weather check"
   fi
 }
-
-

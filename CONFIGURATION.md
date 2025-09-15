@@ -49,7 +49,7 @@ Each file in `alias/` serves a specific purpose:
 - Modern tool integration with fallbacks
 - Conditional loading based on tool availability
 
-#### alias/git  
+#### alias/git
 - Comprehensive git aliases (`g*` series)
 - Interactive git functions (`glog`, `gcheck`)
 - Git workflow shortcuts
@@ -87,7 +87,7 @@ Each file in `alias/` serves a specific purpose:
 - **Plugin Manager**: Zinit for fast, parallel loading
 - **Essential Plugins**:
   - `zsh-autosuggestions` - Command suggestions
-  - `zsh-syntax-highlighting` - Command highlighting  
+  - `zsh-syntax-highlighting` - Command highlighting
   - `zsh-vi-mode` - Enhanced vi mode
 - **Annexes**: Additional functionality modules
 
@@ -95,7 +95,7 @@ Each file in `alias/` serves a specific purpose:
 ```zsh
 # Plugin loading in .zshrc
 zinit light "zsh-users/zsh-autosuggestions"
-zinit light "zsh-users/zsh-syntax-highlighting" 
+zinit light "zsh-users/zsh-syntax-highlighting"
 zinit light "jeffreytse/zsh-vi-mode"
 ```
 

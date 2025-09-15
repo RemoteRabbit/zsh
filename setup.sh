@@ -60,7 +60,7 @@ install_zsh() {
 # Function to install modern shell tools
 install_modern_tools() {
     echo "Installing modern shell tools..."
-    
+
     local tools
     case "$os_name" in
         Linux*)
@@ -96,7 +96,7 @@ install_modern_tools() {
 # Function to install pre-commit
 install_precommit() {
     echo "Installing pre-commit..."
-    
+
     # Try pip first, then package manager
     if command -v pip3 &> /dev/null; then
         pip3 install --user pre-commit
@@ -187,7 +187,7 @@ if command -v zsh &> /dev/null && [[ -f "$HOME/.local/share/zinit/zinit.git/zini
     zsh -c '
         source "$HOME/.local/share/zinit/zinit.git/zinit.zsh"
         zinit light "zsh-users/zsh-autosuggestions"
-        zinit light "zsh-users/zsh-syntax-highlighting" 
+        zinit light "zsh-users/zsh-syntax-highlighting"
         zinit light "jeffreytse/zsh-vi-mode"
         echo "Plugins installed successfully!"
     ' 2>/dev/null || echo "Plugin installation will happen on first shell startup."
@@ -199,12 +199,12 @@ if command -v pre-commit &> /dev/null; then
     cd "$HOME/repos/personal/zsh"
     pre-commit install
     pre-commit install --hook-type commit-msg
-    
+
     # Initialize secrets baseline
     if command -v detect-secrets &> /dev/null; then
         detect-secrets scan --baseline .secrets.baseline 2>/dev/null || true
     fi
-    
+
     echo "✅ Pre-commit hooks installed successfully!"
     echo "   Run 'pre-commit run --all-files' to test all hooks"
 else

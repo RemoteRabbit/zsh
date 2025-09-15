@@ -4,7 +4,7 @@
 zsh-benchmark() {
   echo "Running Zsh startup benchmark..."
   echo "Testing 10 startup cycles..."
-  
+
   local total_time=0
   for i in {1..10}; do
     local start_time=$(date +%s%3N)
@@ -14,10 +14,10 @@ zsh-benchmark() {
     total_time=$((total_time + duration))
     echo "Run $i: ${duration}ms"
   done
-  
+
   local avg_time=$((total_time / 10))
   echo "Average startup time: ${avg_time}ms"
-  
+
   echo -e "\nRunning detailed profiling..."
   ZSH_BENCHMARK=1 zsh -i -c 'exit'
 }

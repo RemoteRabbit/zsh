@@ -20,11 +20,11 @@ if command -v eza &> /dev/null; then
   alias ll="eza -la --icons"
   alias la="eza -a --icons"
   alias lt="eza --tree --icons"
-  
+
   # Create wrapper functions with different names for better completion
   lsa() { eza -a --icons "$@"; }
   lla() { eza -la --icons "$@"; }
-  
+
   # Set up completion for wrapper functions (after compinit)
   if (( $+functions[compdef] )); then
     compdef _files lsa lla
