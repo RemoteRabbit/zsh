@@ -39,6 +39,13 @@ A highly optimized, modular Zsh configuration focused on productivity, performan
 - **Emergency recovery** - Minimal config fallback if things break
 - **Safe reload** - Test config before applying
 
+### 🔍 Quality Assurance & Development
+- **Pre-commit hooks** - Automated code quality checks before commits
+- **Shell script linting** - ShellCheck integration for script validation
+- **Markdown formatting** - Automatic documentation formatting
+- **Security scanning** - Detect secrets and security issues
+- **Syntax validation** - Zsh syntax checking for all configuration files
+
 ### 📚 Built-in Help System
 - **Interactive help** - `zsh-help` command with categories
 - **Function discovery** - `list-functions` shows available tools
@@ -275,6 +282,14 @@ Performance optimizations:
 config-health        # Check configuration health
 zsh-benchmark        # Monitor performance
 zinit update         # Update plugins
+```
+
+### Development & Quality Assurance
+```bash
+pre-commit run --all-files  # Run all quality checks
+pre-commit install          # Install git hooks
+shellcheck *.sh             # Lint shell scripts
+zsh -n .zshrc               # Validate zsh syntax
 ```
 
 ### Troubleshooting

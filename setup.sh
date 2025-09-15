@@ -65,17 +65,17 @@ install_modern_tools() {
     case "$os_name" in
         Linux*)
             if command -v pacman &> /dev/null; then
-                tools="eza bat delta ripgrep fd starship zoxide atuin"
+                tools="eza bat delta ripgrep fd starship zoxide atuin shellcheck"
                 sudo pacman -S --noconfirm --needed $tools
             elif command -v dnf &> /dev/null; then
-                tools="eza bat git-delta ripgrep fd-find starship zoxide atuin"
+                tools="eza bat git-delta ripgrep fd-find starship zoxide atuin ShellCheck"
                 sudo dnf install -y $tools
             elif command -v apt &> /dev/null; then
-                tools="bat ripgrep fd-find"
+                tools="bat ripgrep fd-find shellcheck"
                 sudo apt install -y $tools
                 echo "Note: eza, delta, starship, zoxide, and atuin may need manual installation on Debian/Ubuntu"
             elif command -v zypper &> /dev/null; then
-                tools="bat ripgrep fd starship zoxide"
+                tools="bat ripgrep fd starship zoxide ShellCheck"
                 sudo zypper install -y --no-confirm $tools
                 echo "Note: eza, delta, and atuin may need manual installation on SUSE"
             else
@@ -84,7 +84,7 @@ install_modern_tools() {
             ;;
         Darwin*)
             if command -v brew &> /dev/null; then
-                tools="eza bat git-delta ripgrep fd starship zoxide atuin"
+                tools="eza bat git-delta ripgrep fd starship zoxide atuin shellcheck"
                 brew install $tools
             else
                 echo "Homebrew not found. Please install it first."
@@ -93,15 +93,54 @@ install_modern_tools() {
     esac
 }
 
+# Function to install pre-commit
+install_precommit() {
+    echo "Installing pre-commit..."
+    
+    # Try pip first, then package manager
+    if command -v pip3 &> /dev/null; then
+        pip3 install --user pre-commit
+        echo "✅ pre-commit installed via pip3"
+    elif command -v pip &> /dev/null; then
+        pip install --user pre-commit
+        echo "✅ pre-commit installed via pip"
+    else
+        case "$os_name" in
+            Linux*)
+                if command -v pacman &> /dev/null; then
+                    sudo pacman -S --noconfirm --needed pre-commit
+                elif command -v dnf &> /dev/null; then
+                    sudo dnf install -y pre-commit
+                elif command -v apt &> /dev/null; then
+                    sudo apt install -y pre-commit
+                else
+                    echo "⚠️  Could not install pre-commit automatically"
+                    echo "   Please install manually: pip install pre-commit"
+                fi
+                ;;
+            Darwin*)
+                if command -v brew &> /dev/null; then
+                    brew install pre-commit
+                else
+                    echo "⚠️  Could not install pre-commit automatically"
+                    echo "   Please install manually: pip install pre-commit"
+                fi
+                ;;
+        esac
+    fi
+}
+
 # Check the OS name and install tools
 case "$os_name" in
     Linux*)
         check_and_update_zsh
         install_modern_tools
+        install_precommit
         ;;
     Darwin*)
         check_and_update_zsh "brew install" "brew info"
         install_modern_tools
+        install_precommit
         ;;
     *)
         echo "Unsupported operating system: $os_name"
@@ -152,6 +191,24 @@ if command -v zsh &> /dev/null && [[ -f "$HOME/.local/share/zinit/zinit.git/zini
         zinit light "jeffreytse/zsh-vi-mode"
         echo "Plugins installed successfully!"
     ' 2>/dev/null || echo "Plugin installation will happen on first shell startup."
+fi
+
+# Setup pre-commit hooks
+if command -v pre-commit &> /dev/null; then
+    echo "Setting up pre-commit hooks..."
+    cd "$HOME/repos/personal/zsh"
+    pre-commit install
+    pre-commit install --hook-type commit-msg
+    
+    # Initialize secrets baseline
+    if command -v detect-secrets &> /dev/null; then
+        detect-secrets scan --baseline .secrets.baseline 2>/dev/null || true
+    fi
+    
+    echo "✅ Pre-commit hooks installed successfully!"
+    echo "   Run 'pre-commit run --all-files' to test all hooks"
+else
+    echo "⚠️  Pre-commit not available, skipping hook installation"
 fi
 
 echo "🎉 Zsh setup complete!"
