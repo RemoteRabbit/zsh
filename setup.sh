@@ -57,13 +57,51 @@ install_zsh() {
     fi
 }
 
-# Check the OS name
+# Function to install modern shell tools
+install_modern_tools() {
+    echo "Installing modern shell tools..."
+    
+    local tools
+    case "$os_name" in
+        Linux*)
+            if command -v pacman &> /dev/null; then
+                tools="eza bat delta ripgrep fd starship zoxide atuin"
+                sudo pacman -S --noconfirm --needed $tools
+            elif command -v dnf &> /dev/null; then
+                tools="eza bat git-delta ripgrep fd-find starship zoxide atuin"
+                sudo dnf install -y $tools
+            elif command -v apt &> /dev/null; then
+                tools="bat ripgrep fd-find"
+                sudo apt install -y $tools
+                echo "Note: eza, delta, starship, zoxide, and atuin may need manual installation on Debian/Ubuntu"
+            elif command -v zypper &> /dev/null; then
+                tools="bat ripgrep fd starship zoxide"
+                sudo zypper install -y --no-confirm $tools
+                echo "Note: eza, delta, and atuin may need manual installation on SUSE"
+            else
+                echo "Note: Modern tools may need manual installation on your system"
+            fi
+            ;;
+        Darwin*)
+            if command -v brew &> /dev/null; then
+                tools="eza bat git-delta ripgrep fd starship zoxide atuin"
+                brew install $tools
+            else
+                echo "Homebrew not found. Please install it first."
+            fi
+            ;;
+    esac
+}
+
+# Check the OS name and install tools
 case "$os_name" in
     Linux*)
         check_and_update_zsh
+        install_modern_tools
         ;;
     Darwin*)
         check_and_update_zsh "brew install" "brew info"
+        install_modern_tools
         ;;
     *)
         echo "Unsupported operating system: $os_name"
@@ -71,8 +109,55 @@ case "$os_name" in
         ;;
 esac
 
-# Create symlinks
+# Create symlinks with backup
+echo "Setting up Zsh configuration..."
+
+# Backup existing files
+backup_dir="$HOME/.config/zsh_backup_$(date +%Y%m%d_%H%M%S)"
+if [[ -f "$HOME/.zshenv" ]] || [[ -d "$HOME/.config/zsh" ]]; then
+    echo "Backing up existing configuration to $backup_dir"
+    mkdir -p "$backup_dir"
+    [[ -f "$HOME/.zshenv" ]] && mv "$HOME/.zshenv" "$backup_dir/"
+    [[ -d "$HOME/.config/zsh" ]] && mv "$HOME/.config/zsh" "$backup_dir/"
+fi
+
+# Create directory and symlinks
+mkdir -p "$HOME/.config"
 ln -sf "$HOME/repos/personal/zsh/.zshenv" "$HOME/.zshenv"
-mkdir -p "$HOME/.config/zsh"
-ln -sf "$HOME/repos/personal/zsh/"* "$HOME/.config/zsh"
-ln -sf "$HOME/repos/personal/zsh/.zshrc" "$HOME/.config/zsh/.zshrc"
+ln -sf "$HOME/repos/personal/zsh" "$HOME/.config/zsh"
+
+# Install Zinit plugin manager
+echo "Installing Zinit plugin manager..."
+if [[ ! -f "$HOME/.local/share/zinit/zinit.git/zinit.zsh" ]]; then
+    command mkdir -p "$HOME/.local/share/zinit" && command chmod g-rwX "$HOME/.local/share/zinit"
+    command git clone --depth=1 https://github.com/zdharma-continuum/zinit "$HOME/.local/share/zinit/zinit.git"
+    echo "Zinit installed successfully!"
+else
+    echo "Zinit already installed."
+fi
+
+# Compile zsh files for faster loading
+if command -v zsh &> /dev/null; then
+    echo "Compiling Zsh configuration files..."
+    zsh -c "autoload -U zrecompile && zrecompile -p $HOME/.config/zsh/.zshrc" 2>/dev/null || true
+fi
+
+# Install plugins with Zinit
+if command -v zsh &> /dev/null && [[ -f "$HOME/.local/share/zinit/zinit.git/zinit.zsh" ]]; then
+    echo "Installing Zsh plugins..."
+    zsh -c '
+        source "$HOME/.local/share/zinit/zinit.git/zinit.zsh"
+        zinit light "zsh-users/zsh-autosuggestions"
+        zinit light "zsh-users/zsh-syntax-highlighting" 
+        zinit light "jeffreytse/zsh-vi-mode"
+        echo "Plugins installed successfully!"
+    ' 2>/dev/null || echo "Plugin installation will happen on first shell startup."
+fi
+
+echo "🎉 Zsh setup complete!"
+echo "📋 What was installed:"
+echo "  • Zsh shell and modern tools (eza, bat, delta, etc.)"
+echo "  • Zinit plugin manager with 3 essential plugins"
+echo "  • Optimized configuration with lazy-loading"
+echo ""
+echo "🚀 To start using: restart your terminal or run 'source ~/.zshenv'"
