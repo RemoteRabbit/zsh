@@ -1,0 +1,90 @@
+# Enhanced FZF functions for better productivity
+
+# Search file contents with ripgrep and preview
+search() {
+  if [[ $# -eq 0 ]]; then
+    echo "Usage: search <pattern> [path]"
+    return 1
+  fi
+  
+  local path=${2:-.}
+  rg --color=always --line-number --no-heading --smart-case "$1" "$path" |
+    fzf --ansi \
+        --delimiter : \
+        --preview 'bat --color=always --style=numbers --highlight-line {2} {1}' \
+        --preview-window 'right:60%:+{2}+3/3:~3' \
+        --bind 'enter:execute(nvim {1} +{2})'
+}
+
+# Interactive git log with preview
+glog() {
+  git log --color=always --format="%C(auto)%h%d %s %C(black)%C(bold)%cr" "$@" |
+    fzf --ansi --no-sort --reverse --tiebreak=index \
+        --preview 'git show --color=always {1}' \
+        --bind 'enter:execute(git show {1} | less -R)'
+}
+
+# Process finder with kill option
+pkill() {
+  local pid
+  pid=$(ps -eo pid,ppid,user,comm --no-headers |
+    fzf --header="Select process to kill" \
+        --preview 'ps -f -p {1}' \
+        --preview-window=down:3:wrap |
+    awk '{print $1}')
+  
+  if [[ -n "$pid" ]]; then
+    echo "Killing process $pid..."
+    kill "$pid"
+  fi
+}
+
+# Quick directory navigation with history
+j() {
+  if [[ $# -eq 0 ]]; then
+    # Show interactive directory picker
+    local dir
+    dir=$(zoxide query -l | fzf --height 40% --reverse --header="Jump to directory")
+    [[ -n "$dir" ]] && cd "$dir"
+  else
+    # Use zoxide normally
+    z "$@"
+  fi
+}
+
+# Enhanced history search
+h() {
+  if [[ $# -eq 0 ]]; then
+    # Interactive history search
+    local cmd
+    cmd=$(history -n 1 | 
+      fzf --tac --no-sort --exact \
+          --header="Select command to run" \
+          --preview 'echo {}' \
+          --preview-window=down:3:wrap)
+    [[ -n "$cmd" ]] && eval "$cmd"
+  else
+    # Search history with pattern
+    history -n 1 | rg "$1"
+  fi
+}
+
+# File finder with actions
+f() {
+  local file
+  file=$(fzf --header="Select file action" \
+             --bind 'ctrl-o:execute(nvim {})+abort' \
+             --bind 'ctrl-y:execute-silent(echo {} | pbcopy)+abort' \
+             --bind 'ctrl-d:execute(rm -i {})+reload($FZF_DEFAULT_COMMAND)' \
+             --preview 'bat --color=always --style=numbers --line-range=:500 {}')
+  
+  [[ -n "$file" ]] && echo "Selected: $file"
+}
+
+# Environment variable browser
+env-search() {
+  env | sort |
+    fzf --header="Environment Variables" \
+        --preview 'echo {1} | cut -d= -f2-' \
+        --preview-window=down:3:wrap
+}

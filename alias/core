@@ -1,18 +1,52 @@
 alias fedi="neonmodem"
-alias fzf="fzf | xargs nvim"
-alias ls="eza"
-alias la="eza --all --long"
-alias ll="eza --long"
+alias fzfn="fzf | xargs nvim"
 alias pbopy="wl-copy"
-alias rnotes="generate-release-notes-with-cody"
 alias ro="cd $HOME/repos/open"
 alias rp="cd $HOME/repos/personal"
 alias rw="cd $HOME/repos/work"
-alias rm="trash -v"
 alias so="source $ZDOTDIR/.zshrc"
+alias tms="sh $HOME/.config/zsh/scripts/shell/session-wizard.sh"
 alias vim="nvim"
+
+# Ensure vim alias uses proper completion
+if (( $+functions[compdef] )); then
+  compdef vim=nvim
+fi
 alias yc="gpg-connect-agent 'scd serialno' 'learn --force' /bye"
-alias z="zellij"
+
+# Modern tool aliases
+if command -v eza &> /dev/null; then
+  alias ls="eza --icons"
+  alias ll="eza -la --icons"
+  alias la="eza -a --icons"
+  alias lt="eza --tree --icons"
+  
+  # Create wrapper functions with different names for better completion
+  lsa() { eza -a --icons "$@"; }
+  lla() { eza -la --icons "$@"; }
+  
+  # Set up completion for wrapper functions (after compinit)
+  if (( $+functions[compdef] )); then
+    compdef _files lsa lla
+  fi
+else
+  alias ll="ls -la"
+  alias la="ls -a"
+fi
+
+if command -v bat &> /dev/null; then
+  alias view="bat"
+  alias less="bat --paging=always"
+fi
+
+if command -v rg &> /dev/null; then
+  alias grep="rg"
+fi
+
+if command -v fd &> /dev/null; then
+  alias find="fd"
+fi
+
 
 fc() {
   local dir

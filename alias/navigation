@@ -1,0 +1,47 @@
+# Enhanced navigation aliases and functions
+
+# Quick directory jumping
+alias ..="cd .."
+alias ...="cd ../.."
+alias ....="cd ../../.."
+alias .....="cd ../../../.."
+
+# Directory listing with context
+alias l="ls -1"
+alias lh="ls -lah"
+alias ldot="ls -ld .*"
+
+# Directory operations
+alias mkdir="mkdir -pv"
+alias md="mkdir -pv"
+alias rd="rmdir"
+
+# Quick directory access
+alias home="cd ~"
+alias root="cd /"
+alias tmp="cd /tmp"
+
+# Enhanced directory functions
+take() {
+  mkdir -p "$1" && cd "$1"
+}
+
+# Better find with fzf integration
+ff() {
+  local file
+  file=$(fzf --preview 'head -100 {}') && $EDITOR "$file"
+}
+
+# Quick edit function
+edit() {
+  if [[ $# -eq 0 ]]; then
+    $EDITOR .
+  else
+    $EDITOR "$@"
+  fi
+}
+
+# Zoxide shortcuts for common directories
+alias repos="z repos"
+alias work="z work" 
+alias config="z .config"

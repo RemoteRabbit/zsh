@@ -1,0 +1,38 @@
+# Zsh performance benchmarking utilities
+
+# Benchmark zsh startup time
+zsh-benchmark() {
+  echo "Running Zsh startup benchmark..."
+  echo "Testing 10 startup cycles..."
+  
+  local total_time=0
+  for i in {1..10}; do
+    local start_time=$(date +%s%3N)
+    ZSH_BENCHMARK=0 zsh -i -c 'exit' 2>/dev/null
+    local end_time=$(date +%s%3N)
+    local duration=$((end_time - start_time))
+    total_time=$((total_time + duration))
+    echo "Run $i: ${duration}ms"
+  done
+  
+  local avg_time=$((total_time / 10))
+  echo "Average startup time: ${avg_time}ms"
+  
+  echo -e "\nRunning detailed profiling..."
+  ZSH_BENCHMARK=1 zsh -i -c 'exit'
+}
+
+# Quick startup time check
+zsh-time() {
+  local start_time=$(date +%s%3N)
+  zsh -i -c 'exit' 2>/dev/null
+  local end_time=$(date +%s%3N)
+  local duration=$((end_time - start_time))
+  echo "Startup time: ${duration}ms"
+}
+
+# Show what's slowing down startup
+zsh-profile() {
+  echo "Profiling current shell session startup..."
+  ZSH_BENCHMARK=1 exec zsh
+}
