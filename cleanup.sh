@@ -15,7 +15,7 @@ echo "============================"
 confirm() {
     local prompt="$1"
     local response
-    read -p "$prompt (y/N): " response
+    read -r -p "$prompt (y/N): " response
     [[ "$response" =~ ^[Yy]$ ]]
 }
 
@@ -24,12 +24,13 @@ cleanup_backups() {
     echo "📁 Cleaning backup directories..."
 
     if [[ -d "$CONFIG_DIR/backups" ]]; then
-        local backup_count=$(ls -1 "$CONFIG_DIR/backups" 2>/dev/null | wc -l)
+        local backup_count
+        backup_count=$(find "$CONFIG_DIR/backups" -maxdepth 1 -type d ! -path "$CONFIG_DIR/backups" | wc -l)
         if [[ $backup_count -gt 0 ]]; then
             echo "Found $backup_count backup directories"
             if confirm "Remove all backups except the 3 most recent?"; then
                 # Keep only the 3 most recent backups
-                ls -1t "$CONFIG_DIR/backups" | tail -n +4 | while read -r old_backup; do
+                find "$CONFIG_DIR/backups" -maxdepth 1 -type d ! -path "$CONFIG_DIR/backups" -printf '%T@ %p\n' | sort -rn | tail -n +4 | cut -d' ' -f2- | while read -r old_backup; do
                     rm -rf "$CONFIG_DIR/backups/$old_backup"
                     echo "Removed: $old_backup"
                 done

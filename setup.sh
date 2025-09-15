@@ -66,16 +66,20 @@ install_modern_tools() {
         Linux*)
             if command -v pacman &> /dev/null; then
                 tools="eza bat delta ripgrep fd starship zoxide atuin shellcheck"
+                # shellcheck disable=SC2086
                 sudo pacman -S --noconfirm --needed $tools
             elif command -v dnf &> /dev/null; then
                 tools="eza bat git-delta ripgrep fd-find starship zoxide atuin ShellCheck"
+                # shellcheck disable=SC2086
                 sudo dnf install -y $tools
             elif command -v apt &> /dev/null; then
                 tools="bat ripgrep fd-find shellcheck"
+                # shellcheck disable=SC2086
                 sudo apt install -y $tools
                 echo "Note: eza, delta, starship, zoxide, and atuin may need manual installation on Debian/Ubuntu"
             elif command -v zypper &> /dev/null; then
                 tools="bat ripgrep fd starship zoxide ShellCheck"
+                # shellcheck disable=SC2086
                 sudo zypper install -y --no-confirm $tools
                 echo "Note: eza, delta, and atuin may need manual installation on SUSE"
             else
@@ -85,6 +89,7 @@ install_modern_tools() {
         Darwin*)
             if command -v brew &> /dev/null; then
                 tools="eza bat git-delta ripgrep fd starship zoxide atuin shellcheck"
+                # shellcheck disable=SC2086
                 brew install $tools
             else
                 echo "Homebrew not found. Please install it first."
@@ -196,7 +201,7 @@ fi
 # Setup pre-commit hooks
 if command -v pre-commit &> /dev/null; then
     echo "Setting up pre-commit hooks..."
-    cd "$HOME/repos/personal/zsh"
+    cd "$HOME/repos/personal/zsh" || exit 1
     pre-commit install
     pre-commit install --hook-type commit-msg
 
