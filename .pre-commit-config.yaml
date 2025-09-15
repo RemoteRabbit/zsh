@@ -1,0 +1,96 @@
+# Pre-commit configuration for zsh configuration repository
+# See https://pre-commit.com for more information
+
+repos:
+  # General file checks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-json
+      - id: check-toml
+      - id: check-added-large-files
+      - id: check-case-conflict
+      - id: check-executables-have-shebangs
+      - id: check-shebang-scripts-are-executable
+      - id: check-symlinks
+      - id: destroyed-symlinks
+      - id: fix-byte-order-marker
+      - id: mixed-line-ending
+        args: ['--fix=lf']
+      - id: check-merge-conflict
+
+  # Shell script linting
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: v0.9.0.6
+    hooks:
+      - id: shellcheck
+        args: ['-e', 'SC1091', '-e', 'SC2034']  # Ignore sourcing and unused variables
+        types: [shell]
+
+  # Markdown formatting
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.37.0
+    hooks:
+      - id: markdownlint
+        args: ['--fix', '--disable', 'MD013', 'MD033', 'MD041']  # Disable line length, HTML, first line H1
+
+  # Security checks
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.4.0
+    hooks:
+      - id: detect-secrets
+        args: ['--baseline', '.secrets.baseline']
+        exclude: .git
+
+  # Additional shell formatting
+  - repo: https://github.com/lovesegfault/beautysh
+    rev: v6.2.1
+    hooks:
+      - id: beautysh
+        args: ['--indent-size=2']
+        types: [shell]
+
+  # Commit message formatting
+  - repo: https://github.com/commitizen-tools/commitizen
+    rev: v3.13.0
+    hooks:
+      - id: commitizen
+        stages: [commit-msg]
+
+  # Check for common mistakes in shell scripts
+  - repo: local
+    hooks:
+      - id: zsh-syntax-check
+        name: zsh-syntax-check
+        entry: zsh -n
+        language: system
+        files: \.zsh$|\.zshrc$|\.zshenv$
+        pass_filenames: true
+
+      - id: validate-config-syntax
+        name: validate-config-syntax
+        entry: bash -c 'for file in "$@"; do if [[ $file == *.zsh ]] || [[ $file == .zshrc ]] || [[ $file == .zshenv ]]; then zsh -n "$file" || exit 1; fi; done'
+        language: system
+        files: \.(zsh|zshrc|zshenv)$
+        pass_filenames: true
+
+      - id: check-broken-symlinks
+        name: check-broken-symlinks
+        entry: bash -c 'find . -type l ! -exec test -e {} \; -print | grep -q . && echo "Broken symlinks found" && exit 1 || exit 0'
+        language: system
+        pass_filenames: false
+
+# Configuration for specific hooks
+ci:
+  autofix_commit_msg: |
+    fix: auto fixes from pre-commit hooks
+
+    for more information, see https://pre-commit.ci
+  autofix_prs: true
+  autoupdate_commit_msg: 'chore: pre-commit autoupdate'
+  autoupdate_schedule: weekly
+  skip: []
+  submodules: false
