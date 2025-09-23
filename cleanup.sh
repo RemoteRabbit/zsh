@@ -107,8 +107,6 @@ clean_completion_cache() {
     fi
 }
 
-
-
 # Optimize Zinit
 optimize_zinit() {
     echo "⚡ Optimizing Zinit..."

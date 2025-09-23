@@ -84,6 +84,15 @@ repos:
         language: system
         pass_filenames: false
 
+      - id: generate-documentation
+        name: generate-documentation
+        entry: ./scripts/shell/generate-docs.sh
+        language: system
+        files: ^alias/.*|keybindings\.zsh$
+        pass_filenames: false
+        always_run: false
+        stages: [push]
+
 # Configuration for specific hooks
 ci:
   autofix_commit_msg: |
