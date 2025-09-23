@@ -31,6 +31,8 @@ get_latest_zsh_version() {
         dnf info zsh | grep -m1 "Version" | awk '{print $3}'
     elif command -v yum &> /dev/null; then
         yum info zsh | grep -m1 "Version" | awk '{print $3}'
+    elif command -v apt &> /dev/null; then
+        apt-cache policy zsh | grep -m1 "Candidate:" | awk '{print $2}'
     elif command -v zypper &> /dev/null; then
         zypper info zsh | grep -m1 "Version" | awk '{print $3}'
     elif command -v pacman &> /dev/null; then
@@ -47,6 +49,8 @@ install_zsh() {
         sudo dnf install -y zsh
     elif command -v yum &> /dev/null; then
         sudo yum install -y zsh
+    elif command -v apt &> /dev/null; then
+        sudo apt update && sudo apt install -y zsh
     elif command -v zypper &> /dev/null; then
         sudo zypper install -y --no-confirm zsh
     elif command -v pacman &> /dev/null; then
@@ -64,7 +68,12 @@ install_modern_tools() {
     local tools
     case "$os_name" in
         Linux*)
-            if command -v pacman &> /dev/null; then
+            if command -v brew &> /dev/null; then
+                # Use Homebrew on Linux if available
+                tools="eza bat git-delta ripgrep fd starship zoxide atuin shellcheck"
+                # shellcheck disable=SC2086
+                brew install $tools
+            elif command -v pacman &> /dev/null; then
                 tools="eza bat delta ripgrep fd starship zoxide atuin shellcheck"
                 # shellcheck disable=SC2086
                 sudo pacman -S --noconfirm --needed $tools
@@ -75,8 +84,9 @@ install_modern_tools() {
             elif command -v apt &> /dev/null; then
                 tools="bat ripgrep fd-find shellcheck"
                 # shellcheck disable=SC2086
-                sudo apt install -y $tools
+                sudo apt update && sudo apt install -y $tools
                 echo "Note: eza, delta, starship, zoxide, and atuin may need manual installation on Debian/Ubuntu"
+                echo "      Consider installing Homebrew for Linux to get all tools: https://brew.sh/"
             elif command -v zypper &> /dev/null; then
                 tools="bat ripgrep fd starship zoxide ShellCheck"
                 # shellcheck disable=SC2086
@@ -84,6 +94,7 @@ install_modern_tools() {
                 echo "Note: eza, delta, and atuin may need manual installation on SUSE"
             else
                 echo "Note: Modern tools may need manual installation on your system"
+                echo "      Consider installing Homebrew for Linux: https://brew.sh/"
             fi
             ;;
         Darwin*)
