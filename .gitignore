@@ -11,3 +11,6 @@ shell-plugins.backup/
 # Generated Files
 .zcompdump*
 .zsh_history
+
+# Keep auto-generated docs in repo (remove this line if you want to ignore them)
+# FUNCTIONS.md

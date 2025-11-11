@@ -1,6 +1,18 @@
 alias fedi="neonmodem"
 alias fzfn="fzf | xargs nvim"
-alias pbopy="wl-copy"
+# Cross-platform clipboard copy
+clipcopy() {
+  if command -v pbcopy &> /dev/null; then
+    pbcopy
+  elif command -v wl-copy &> /dev/null; then
+    wl-copy
+  elif command -v xclip &> /dev/null; then
+    xclip -selection clipboard
+  else
+    echo "No clipboard tool found (pbcopy/xclip/wl-copy)"
+    return 1
+  fi
+}
 alias ro="cd $HOME/repos/open"
 alias rp="cd $HOME/repos/personal"
 alias rw="cd $HOME/repos/work"
@@ -36,19 +48,10 @@ fi
 
 if command -v bat &> /dev/null; then
   alias view="bat"
-  alias less="bat --paging=always"
 fi
 
-if command -v rg &> /dev/null; then
-  alias grep="rg"
-fi
-
-if command -v fd &> /dev/null; then
-  alias find="fd"
-fi
-
-
-fc() {
+# Change directory with fzf (renamed from fc to avoid conflict)
+cdf() {
   local dir
-  dir=$(find ${1:-.} -type d -not -path '*/\.*' 2> /dev/null | fzf +m) && cd "$dir"
+  dir=$(command find ${1:-.} -type d -not -path '*/\.*' 2> /dev/null | fzf +m) && cd "$dir"
 }
