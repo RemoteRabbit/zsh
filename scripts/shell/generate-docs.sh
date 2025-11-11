@@ -22,15 +22,9 @@ cat > "$OUTPUT_FILE" << 'EOF'
 
 Auto-generated documentation of all custom functions and aliases.
 
-**Last updated:** $(date '+%Y-%m-%d %H:%M:%S')
-
 ---
 
 EOF
-
-# Update timestamp
-sed -i.bak "s/\*\*Last updated:\*\*.*/\*\*Last updated:\*\* $(date '+%Y-%m-%d %H:%M:%S')/" "$OUTPUT_FILE"
-rm -f "$OUTPUT_FILE.bak"
 
 # Function to extract and document functions from a file
 document_file() {
