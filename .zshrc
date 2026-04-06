@@ -18,9 +18,6 @@ if [[ -d "$ZDOTDIR/extras" ]]; then
   done
 fi
 
-# Load custom keybindings
-[[ -r "$ZDOTDIR/keybindings.zsh" ]] && source "$ZDOTDIR/keybindings.zsh"
-
 # Load recovery system
 [[ -r "$ZDOTDIR/recovery.zsh" ]] && source "$ZDOTDIR/recovery.zsh"
 
@@ -81,12 +78,15 @@ fi
 
 # Homebrew setup
 if [[ $(uname) == "Darwin" ]]; then
-  # macOS Homebrew
-  export PATH="/opt/homebrew/bin:$PATH"
-  eval "$(/opt/homebrew/bin/brew shellenv)"
+  # macOS Homebrew - detect Intel vs Apple Silicon
+  if [[ -x /opt/homebrew/bin/brew ]]; then
+    eval "$(/opt/homebrew/bin/brew shellenv)"
+  elif [[ -x /usr/local/bin/brew ]]; then
+    eval "$(/usr/local/bin/brew shellenv)"
+  fi
 elif [[ $(uname) == "Linux" ]] && command -v brew &> /dev/null; then
-  # Linux Homebrew
-  eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+  # Linux Homebrew - use brew from PATH
+  eval "$(command -v brew) shellenv"
 fi
 
 # Initialize Zinit plugin manager
@@ -104,8 +104,8 @@ autoload -Uz _zinit
 
 # Load plugins with Zinit (fast, automatic updates)
 zinit light "zsh-users/zsh-autosuggestions"
-zinit light "zsh-users/zsh-syntax-highlighting"
 zinit light "jeffreytse/zsh-vi-mode"
+zinit light "zsh-users/zsh-syntax-highlighting"  # Load last for compatibility
 
 # Auto-suggestions styling
 ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=8,italic'
@@ -119,6 +119,9 @@ zinit light-mode for \
     zdharma-continuum/zinit-annex-bin-gem-node \
     zdharma-continuum/zinit-annex-patch-dl \
     zdharma-continuum/zinit-annex-rust
+
+# Load custom keybindings after plugins so widgets exist
+[[ -r "$ZDOTDIR/keybindings.zsh" ]] && source "$ZDOTDIR/keybindings.zsh"
 
 # Enable Extended globbing
 setopt extended_glob
@@ -149,8 +152,14 @@ export FZF_DEFAULT_OPTS="
 "
 
 # Smart file finder with ripgrep content preview
-export FZF_DEFAULT_COMMAND='rg --files --hidden --follow --glob "!.git/*" --glob "!node_modules/*"'
-export FZF_CTRL_T_COMMAND='$FZF_DEFAULT_COMMAND'
+if command -v rg &> /dev/null; then
+  export FZF_DEFAULT_COMMAND='rg --files --hidden --follow --glob "!.git/*" --glob "!node_modules/*"'
+elif command -v fd &> /dev/null; then
+  export FZF_DEFAULT_COMMAND='fd --type f --hidden --follow --exclude .git --exclude node_modules'
+else
+  export FZF_DEFAULT_COMMAND='find . -type f'
+fi
+export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
 
 # Enhanced file preview with syntax highlighting
 export FZF_CTRL_T_OPTS="
@@ -166,7 +175,7 @@ export EDITOR=nvim
 export DOCKER_CMD="podman --storage-opt overlay.ignore_chown_errors=true"
 export DOCKER_SOCK=/var/run/docker.sock
 export DOCKER_HOST=unix:///var/run/docker.sock
-export PNPM_HOME="/home/remoterabbit/.local/share/pnpm"
+export PNPM_HOME="$HOME/.local/share/pnpm"
 export GOPATH=$HOME/go
 export GOBIN=$GOPATH/bin
 export PATH=$PATH:$GOBIN

@@ -24,8 +24,8 @@ glog() {
         --bind 'enter:execute(git show {1} | less -R)'
 }
 
-# Process finder with kill option
-pkill() {
+# Process finder with kill option (renamed from pkill to avoid shadowing system command)
+fpkill() {
   local pid
   pid=$(ps -eo pid,ppid,user,comm --no-headers |
     fzf --header="Select process to kill" \
@@ -74,7 +74,7 @@ f() {
   local file
   file=$(fzf --header="Select file action" \
              --bind 'ctrl-o:execute(nvim {})+abort' \
-             --bind 'ctrl-y:execute-silent(echo {} | pbcopy)+abort' \
+             --bind 'ctrl-y:execute-silent(echo {} | clipcopy)+abort' \
              --bind 'ctrl-d:execute(rm -i {})+reload($FZF_DEFAULT_COMMAND)' \
              --preview 'bat --color=always --style=numbers --line-range=:500 {}')
 
