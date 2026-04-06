@@ -8,6 +8,7 @@ alias .....="cd ../../../.."
 
 # Directory listing with context
 alias l="ls -1"
+alias ll="eza --tree --level 2"
 alias lh="ls -lah"
 alias ldot="ls -ld .*"
 

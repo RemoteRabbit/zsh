@@ -26,26 +26,6 @@ if (( $+functions[compdef] )); then
 fi
 alias yc="gpg-connect-agent 'scd serialno' 'learn --force' /bye"
 
-# Modern tool aliases
-if command -v eza &> /dev/null; then
-  alias ls="eza --icons"
-  alias ll="eza -la --icons"
-  alias la="eza -a --icons"
-  alias lt="eza --tree --icons"
-
-  # Create wrapper functions with different names for better completion
-  lsa() { eza -a --icons "$@"; }
-  lla() { eza -la --icons "$@"; }
-
-  # Set up completion for wrapper functions (after compinit)
-  if (( $+functions[compdef] )); then
-    compdef _files lsa lla
-  fi
-else
-  alias ll="ls -la"
-  alias la="ls -a"
-fi
-
 if command -v bat &> /dev/null; then
   alias view="bat"
 fi
