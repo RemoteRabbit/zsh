@@ -34,6 +34,11 @@ alias gstl="git stash list"
 alias gt="git tag"
 alias gw="git worktree"
 
+# Branching
+alias gsm="git switch main; git pull"
+alias gsb="git switch"
+alias gsc="git switch -c"
+
 # Advanced git aliases
 alias gclean="git clean -fd"
 alias greset="git reset --hard"

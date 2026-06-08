@@ -1,49 +1,81 @@
 # Custom keybindings for enhanced productivity
+#
+# zsh-vi-mode rebuilds the keymap at the first prompt (zvm_after_init), which
+# would wipe any bindkey calls made at source time. So all bindings live in a
+# function that is run *after* zvm initializes (with a fallback when the plugin
+# isn't loaded). The plugin also enables vi mode, so no `bindkey -v` is needed.
 
-# Enable vi mode keybindings (if zsh-vi-mode plugin isn't handling this)
-bindkey -v
-
-# Enhanced navigation in vi mode
-bindkey -M vicmd 'H' beginning-of-line
-bindkey -M vicmd 'L' end-of-line
-bindkey -M vicmd 'K' history-beginning-search-backward
-bindkey -M vicmd 'J' history-beginning-search-forward
-
-# Quick command line editing
 autoload -Uz edit-command-line
 zle -N edit-command-line
-bindkey '^e' edit-command-line
-bindkey '^x^e' edit-command-line
 
-# Enhanced history search
-bindkey '^r' history-incremental-search-backward
-bindkey '^s' history-incremental-search-forward
-bindkey '^p' history-search-backward
-bindkey '^n' history-search-forward
+_apply_custom_keybindings() {
+  # Enhanced navigation in vi mode
+  bindkey -M vicmd 'H' beginning-of-line
+  bindkey -M vicmd 'L' end-of-line
+  bindkey -M vicmd 'K' history-beginning-search-backward
+  bindkey -M vicmd 'J' history-beginning-search-forward
 
-# Quick directory navigation
-bindkey -s '^f' 'f\n'  # Quick file finder
-bindkey -s '^j' 'j\n'  # Quick directory jumper
-bindkey -s '^g' 'search '  # Quick content search
+  # Quick command line editing
+  bindkey '^e' edit-command-line
+  bindkey '^x^e' edit-command-line
 
-# Command line utilities
-bindkey '^u' backward-kill-line
-bindkey '^k' kill-line
-bindkey '^a' beginning-of-line
-bindkey '^e' end-of-line
-bindkey '^w' backward-kill-word
-bindkey '^b' backward-word
-bindkey '^f' forward-word
+  # Enhanced history search (^r is left to atuin)
+  bindkey '^s' history-incremental-search-forward
+  bindkey '^p' history-search-backward
+  bindkey '^n' history-search-forward
 
-# Enhanced completion navigation
-bindkey '^i' complete-word
-bindkey '^[[Z' reverse-menu-complete  # Shift+Tab
+  # Quick directory navigation
+  bindkey -s '^f' 'f\n'  # Quick file finder
+  bindkey -s '^j' 'j\n'  # Quick directory jumper
+  bindkey -s '^g' 'search '  # Quick content search
 
-# Quick reload config
-bindkey -s '^[r' 'source $ZDOTDIR/.zshrc\n'
+  # Command line utilities
+  bindkey '^u' backward-kill-line
+  bindkey '^k' kill-line
+  bindkey '^a' beginning-of-line
+  bindkey '^w' backward-kill-word
+  bindkey '^b' backward-word
 
-# Clear screen but keep scrollback
-bindkey '^l' clear-screen
+  # Enhanced completion navigation
+  bindkey '^i' complete-word
+  bindkey '^[[Z' reverse-menu-complete  # Shift+Tab
+
+  # Quick reload config
+  bindkey -s '^[r' 'source $ZDOTDIR/.zshrc\n'
+
+  # Clear screen but keep scrollback
+  bindkey '^l' clear-screen
+
+  # Insert sudo at beginning of line
+  bindkey '^s^u' insert_sudo
+
+  # Quick git status
+  bindkey -s '^g^s' 'gs\n'
+
+  # Toggle between insert and command mode quickly
+  bindkey -M viins 'jj' vi-cmd-mode
+  bindkey -M viins 'jk' vi-cmd-mode
+
+  # Better undo/redo in vi mode
+  bindkey -M vicmd 'u' undo
+  bindkey -M vicmd '^r' redo
+
+  # Partial command completion
+  bindkey '^[[1;5D' backward-word    # Ctrl+Left
+  bindkey '^[[1;5C' forward-word     # Ctrl+Right
+
+  # Auto-suggestion accept
+  bindkey '^y' autosuggest-accept
+  bindkey '^[[1;5F' autosuggest-accept  # Ctrl+End
+
+  # Session pickers
+  bindkey '^o' sesh-sessions
+  bindkey '^[s' sesh-sessions-gum
+
+  # Search in command history with current input
+  bindkey '^[[A' history-beginning-search-backward-end  # Up arrow
+  bindkey '^[[B' history-beginning-search-forward-end   # Down arrow
+}
 
 # Insert sudo at beginning of line
 insert_sudo() {
@@ -53,26 +85,6 @@ insert_sudo() {
   fi
 }
 zle -N insert_sudo
-bindkey '^s^u' insert_sudo
-
-# Quick git status
-bindkey -s '^g^s' 'gs\n'
-
-# Toggle between insert and command mode quickly
-bindkey -M viins 'jj' vi-cmd-mode
-bindkey -M viins 'jk' vi-cmd-mode
-
-# Better undo/redo in vi mode
-bindkey -M vicmd 'u' undo
-bindkey -M vicmd '^r' redo
-
-# Partial command completion
-bindkey '^[[1;5D' backward-word    # Ctrl+Left
-bindkey '^[[1;5C' forward-word     # Ctrl+Right
-
-# Auto-suggestion accept
-bindkey '^y' autosuggest-accept
-bindkey '^[[1;5F' autosuggest-accept  # Ctrl+End
 
 # Sesh - tmux session picker (works outside tmux)
 sesh-sessions() {
@@ -94,7 +106,6 @@ sesh-sessions() {
   fi
 }
 zle -N sesh-sessions
-bindkey '^o' sesh-sessions
 
 # Sesh - tmux session picker via gum
 sesh-sessions-gum() {
@@ -111,11 +122,17 @@ sesh-sessions-gum() {
   fi
 }
 zle -N sesh-sessions-gum
-bindkey '^[s' sesh-sessions-gum
 
 # Search in command history with current input
 autoload -U history-search-end
 zle -N history-beginning-search-backward-end history-search-end
 zle -N history-beginning-search-forward-end history-search-end
-bindkey '^[[A' history-beginning-search-backward-end  # Up arrow
-bindkey '^[[B' history-beginning-search-forward-end   # Down arrow
+
+# zsh-vi-mode rebuilds the keymap at the first prompt, so apply our bindings
+# afterward via its hook. Fall back to applying immediately if the plugin isn't
+# present.
+if (( ${+ZVM_VERSION} )); then
+  zvm_after_init_commands+=(_apply_custom_keybindings)
+else
+  _apply_custom_keybindings
+fi
