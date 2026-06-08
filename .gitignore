@@ -11,6 +11,12 @@ shell-plugins.backup/
 # Generated Files
 .zcompdump*
 .zsh_history
+.zcompcache/
+.zsh_sessions/
+*.zwc.old
+
+# Local-only machine/site config (proxies, secrets, etc.)
+extras/
 
 # Keep auto-generated docs in repo (remove this line if you want to ignore them)
 # FUNCTIONS.md

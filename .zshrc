@@ -36,11 +36,13 @@ SAVEHIST=10000
 # Initialize completion system (optimized)
 autoload -Uz compinit
 # Only regenerate compdump once per day for faster loading
-if [[ -n ~/.zcompdump(#qN.mh+24) ]]; then
-  compinit
+_zcompdump="${ZDOTDIR:-$HOME}/.zcompdump"
+if [[ -n "$_zcompdump"(#qN.mh+24) ]]; then
+  compinit -d "$_zcompdump"
 else
-  compinit -C  # Skip security check for faster startup
+  compinit -C -d "$_zcompdump"  # Skip security check for faster startup
 fi
+unset _zcompdump
 
 # Enhanced completion styles
 zstyle ':completion:*' matcher-list '' 'm:{a-zA-Z}={A-Za-z}' 'r:|[._-]=* r:|=*' 'l:|=* r:|=*'
@@ -52,16 +54,10 @@ zstyle ':completion:*' completer _complete _match _approximate
 zstyle ':completion:*:match:*' original only
 zstyle ':completion:*:approximate:*' max-errors 1 numeric
 
-# Oh My Zsh configuration
-DISABLE_UPDATE_PROMPT="true"
-ENABLE_CORRECTION="true"
-COMPLETION_WAITING_DOTS="true"
-
 # Initialize tools (lightweight ones)
 eval "$(starship init zsh)"
 eval "$(zoxide init zsh)"
 eval "$(atuin init zsh)"
-eval "$(luarocks path)"
 
 # Lazy-load heavy tools
 _load_carapace() {
@@ -126,8 +122,6 @@ zinit light-mode for \
 # Enable Extended globbing
 setopt extended_glob
 
-# Carapace now loaded via lazy-loading above
-
 # Source additional scripts
 if [[ -d "$ZDOTDIR/scripts/zsh" ]]; then
     # Use null_glob to prevent errors when no matches
@@ -161,16 +155,15 @@ else
 fi
 export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
 
-# Enhanced file preview with syntax highlighting
 export FZF_CTRL_T_OPTS="
   --preview 'bat --color=always --style=numbers --line-range=:500 {} 2>/dev/null || cat {} 2>/dev/null || tree -C {} 2>/dev/null'
   --bind 'ctrl-/:toggle-preview'
 "
 
-# Enhanced directory search
 export FZF_ALT_C_OPTS="
   --preview 'eza --tree --color=always {} | head -200'
 "
+export PATH="$HOME/.cargo/bin:$PATH"
 export EDITOR=nvim
 export DOCKER_CMD="podman --storage-opt overlay.ignore_chown_errors=true"
 export DOCKER_SOCK=/var/run/docker.sock
@@ -179,7 +172,7 @@ export PNPM_HOME="$HOME/.local/share/pnpm"
 export GOPATH=$HOME/go
 export GOBIN=$GOPATH/bin
 export PATH=$PATH:$GOBIN
-export FLYCTL_INSTALL="/home/remoterabbit/.fly"
+export FLYCTL_INSTALL="$HOME/.fly"
 export PATH="$FLYCTL_INSTALL/bin:$PATH"
 eval "$(luarocks path)"
 export PYENV_ROOT="$HOME/.pyenv"
@@ -189,17 +182,14 @@ eval "$(pyenv init -)"
 
 ## [Completion]
 ## Completion scripts setup. Remove the following line to uninstall
-[[ -f /home/remoterabbit/.dart-cli-completion/zsh-config.zsh ]] && . /home/remoterabbit/.dart-cli-completion/zsh-config.zsh || true
+[[ -f "$HOME/.dart-cli-completion/zsh-config.zsh" ]] && . "$HOME/.dart-cli-completion/zsh-config.zsh" || true
 ## [/Completion]
 
-# Add PNPM to PATH if not already present
 case ":$PATH:" in
   *":$PNPM_HOME:"*) ;;
   *) export PATH="$PNPM_HOME:$PATH" ;;
 esac
 
-# Add Local bin to PATH
-# Add local bin to PATH
 export LOCAL_BIN="$HOME/.local/bin"
 case ":$PATH:" in
   *":$LOCAL_BIN:"*) ;;
@@ -212,5 +202,5 @@ if [[ "$ZSH_BENCHMARK" == "1" ]]; then
   zprof | head -20
 fi
 
-#compdef databricks
-compdef _databricks databricks
+autoload -U +X bashcompinit && bashcompinit
+complete -o nospace -C /opt/homebrew/bin/tfschema tfschema
