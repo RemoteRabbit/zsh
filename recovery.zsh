@@ -220,6 +220,9 @@ config_health() {
   fi
 }
 
+# Keep the documented command name while preserving the original function.
+alias config-health=config_health
+
 # Clean old backups (keep last 10)
 cleanup_backups() {
   local config_dir="${ZDOTDIR:-$HOME/.config/zsh}"

@@ -4,25 +4,11 @@ if [[ "$ZSH_BENCHMARK" == "1" ]]; then
 fi
 
 # Disable terminal flow control so Ctrl+s is available for keybindings
-stty -ixon
-
-# Source alias files
-for file in $ZDOTDIR/alias/*; do
-  [[ -r "$file" ]] && [[ -f "$file" ]] && source "$file"
-done
-
-# Load additional configuration files if they exist
-if [[ -d "$ZDOTDIR/extras" ]]; then
-  for file in $ZDOTDIR/extras/*; do
-    [[ -r "$file" ]] && [[ -f "$file" ]] && source "$file"
-  done
-fi
-
-# Load recovery system
-[[ -r "$ZDOTDIR/recovery.zsh" ]] && source "$ZDOTDIR/recovery.zsh"
+[[ -t 0 ]] && stty -ixon
 
 # Zsh options
 setopt autocd autopushd
+setopt extended_glob
 setopt extended_history       # record timestamp of command in HISTFILE
 setopt hist_expire_dups_first # delete duplicates first when HISTFILE size exceeds HISTSIZE
 setopt hist_ignore_dups       # ignore duplicated commands history list
@@ -44,6 +30,17 @@ else
 fi
 unset _zcompdump
 
+# Source local configuration after compinit so completion files can use compdef
+for file in "$ZDOTDIR"/alias/*(N.); do
+  [[ -r "$file" ]] && source "$file"
+done
+
+for file in "$ZDOTDIR"/extras/*(N.); do
+  [[ -r "$file" ]] && source "$file"
+done
+
+[[ -r "$ZDOTDIR/recovery.zsh" ]] && source "$ZDOTDIR/recovery.zsh"
+
 # Enhanced completion styles
 zstyle ':completion:*' matcher-list '' 'm:{a-zA-Z}={A-Za-z}' 'r:|[._-]=* r:|=*' 'l:|=* r:|=*'
 zstyle ':completion:*' menu select
@@ -54,12 +51,14 @@ zstyle ':completion:*' completer _complete _match _approximate
 zstyle ':completion:*:match:*' original only
 zstyle ':completion:*:approximate:*' max-errors 1 numeric
 
-# Initialize tools (lightweight ones)
-eval "$(starship init zsh)"
-eval "$(zoxide init zsh)"
-eval "$(atuin init zsh)"
+# Initialize interactive tools when installed
+command -v starship &> /dev/null && eval "$(starship init zsh)"
+command -v zoxide &> /dev/null && eval "$(zoxide init zsh)"
+command -v atuin &> /dev/null && eval "$(atuin init zsh)"
+command -v mise &> /dev/null && eval "$(mise activate zsh)"
+command -v direnv &> /dev/null && eval "$(direnv hook zsh)"
 
-# Lazy-load heavy tools
+# Lazy-load heavier completion generation at the first prompt
 _load_carapace() {
   unfunction _load_carapace
   export CARAPACE_BRIDGES='zsh,fish,bash,inshellisense'
@@ -72,21 +71,8 @@ if command -v carapace &> /dev/null; then
   add-zsh-hook precmd _load_carapace
 fi
 
-# Homebrew setup
-if [[ $(uname) == "Darwin" ]]; then
-  # macOS Homebrew - detect Intel vs Apple Silicon
-  if [[ -x /opt/homebrew/bin/brew ]]; then
-    eval "$(/opt/homebrew/bin/brew shellenv)"
-  elif [[ -x /usr/local/bin/brew ]]; then
-    eval "$(/usr/local/bin/brew shellenv)"
-  fi
-elif [[ $(uname) == "Linux" ]] && command -v brew &> /dev/null; then
-  # Linux Homebrew - use brew from PATH
-  eval "$(command -v brew) shellenv"
-fi
-
 # Initialize Zinit plugin manager
-if [[ ! -f $HOME/.local/share/zinit/zinit.git/zinit.zsh ]]; then
+if [[ ! -f "$HOME/.local/share/zinit/zinit.git/zinit.zsh" ]]; then
     print -P "%F{33} %F{220}Installing %F{33}ZDHARMA-CONTINUUM%F{220} Initiative Plugin Manager (%F{33}zdharma-continuum/zinit%F{220})…%f"
     command mkdir -p "$HOME/.local/share/zinit" && command chmod g-rwX "$HOME/.local/share/zinit"
     command git clone https://github.com/zdharma-continuum/zinit "$HOME/.local/share/zinit/zinit.git" && \
@@ -94,33 +80,45 @@ if [[ ! -f $HOME/.local/share/zinit/zinit.git/zinit.zsh ]]; then
         print -P "%F{160} The clone has failed.%f%b"
 fi
 
-source "$HOME/.local/share/zinit/zinit.git/zinit.zsh"
-autoload -Uz _zinit
-(( ${+_comps} )) && _comps[zinit]=_zinit
+if [[ -r "$HOME/.local/share/zinit/zinit.git/zinit.zsh" ]]; then
+  source "$HOME/.local/share/zinit/zinit.git/zinit.zsh"
+  autoload -Uz _zinit
+  (( ${+_comps} )) && _comps[zinit]=_zinit
 
-# Load plugins with Zinit (fast, automatic updates)
-zinit light "zsh-users/zsh-autosuggestions"
-zinit light "jeffreytse/zsh-vi-mode"
-zinit light "zsh-users/zsh-syntax-highlighting"  # Load last for compatibility
+  # Vi-mode widgets needed by keybindings load synchronously.
+  zinit light "jeffreytse/zsh-vi-mode"
 
-# Auto-suggestions styling
-ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=8,italic'
-ZSH_AUTOSUGGEST_STRATEGY=(history completion)
-ZSH_AUTOSUGGEST_BUFFER_MAX_SIZE=20
-ZSH_AUTOSUGGEST_USE_ASYNC=1
+  # Completion and pairing widgets must load after compinit and before highlighters.
+  zinit light "Aloxaf/fzf-tab"
+  zstyle ':fzf-tab:*' switch-group '<' '>'
+  zstyle ':fzf-tab:complete:cd:*' fzf-preview 'eza -1 --color=always $realpath 2>/dev/null || ls -1 $realpath'
+  AUTOPAIR_INHIBIT_INIT=1
+  zinit light "hlissner/zsh-autopair"
+  unset AUTOPAIR_INHIBIT_INIT
 
-# Optional: Load annexes for additional functionality
-zinit light-mode for \
-    zdharma-continuum/zinit-annex-as-monitor \
-    zdharma-continuum/zinit-annex-bin-gem-node \
-    zdharma-continuum/zinit-annex-patch-dl \
-    zdharma-continuum/zinit-annex-rust
+  # Nonessential plugins load after the first prompt.
+  export DEJA_ACCEPT_KEY='^Y'
+  export DEJA_CYCLE_KEY=''
+  zinit ice wait"0" lucid depth=1
+  zinit light "Giammarco-Ferranti/deja"
+  zinit ice wait"0" lucid depth=1
+  zinit light "akash329d/zsh-alias-finder"
+  zinit ice wait"0" lucid depth=1
+  zinit light "diverdale/colored-man-pages-plus"
+  zstyle ':colored-man:theme' name catppuccin
+  zinit ice wait"0" lucid depth=1
+  zinit light "zsh-users/zsh-syntax-highlighting"
+
+  # Optional annexes for additional Zinit functionality
+  zinit light-mode for \
+      zdharma-continuum/zinit-annex-as-monitor \
+      zdharma-continuum/zinit-annex-bin-gem-node \
+      zdharma-continuum/zinit-annex-patch-dl \
+      zdharma-continuum/zinit-annex-rust
+fi
 
 # Load custom keybindings after plugins so widgets exist
 [[ -r "$ZDOTDIR/keybindings.zsh" ]] && source "$ZDOTDIR/keybindings.zsh"
-
-# Enable Extended globbing
-setopt extended_glob
 
 # Source additional scripts
 if [[ -d "$ZDOTDIR/scripts/zsh" ]]; then
@@ -174,11 +172,18 @@ export GOBIN=$GOPATH/bin
 export PATH=$PATH:$GOBIN
 export FLYCTL_INSTALL="$HOME/.fly"
 export PATH="$FLYCTL_INSTALL/bin:$PATH"
-eval "$(luarocks path)"
-export PYENV_ROOT="$HOME/.pyenv"
-export PATH="$PYENV_ROOT/bin:$PATH"
-eval "$(pyenv init --path)"
-eval "$(pyenv init -)"
+
+# LuaRocks environment is only needed when invoking Lua tooling.
+if (( $+commands[luarocks] )); then
+  _load_luarocks() {
+    eval "$(command luarocks path)"
+    unfunction luarocks
+    (( $+functions[lua] )) && unfunction lua
+    unfunction _load_luarocks
+  }
+  luarocks() { _load_luarocks; command luarocks "$@" }
+  (( $+commands[lua] )) && lua() { _load_luarocks; command lua "$@" }
+fi
 
 ## [Completion]
 ## Completion scripts setup. Remove the following line to uninstall
@@ -202,5 +207,7 @@ if [[ "$ZSH_BENCHMARK" == "1" ]]; then
   zprof | head -20
 fi
 
-autoload -U +X bashcompinit && bashcompinit
-complete -o nospace -C /opt/homebrew/bin/tfschema tfschema
+if command -v tfschema &> /dev/null; then
+  autoload -U +X bashcompinit && bashcompinit
+  complete -o nospace -C "$(command -v tfschema)" tfschema
+fi

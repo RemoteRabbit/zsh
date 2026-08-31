@@ -63,25 +63,25 @@ install_modern_tools() {
         Linux*)
             if command -v brew &> /dev/null; then
                 # Use Homebrew on Linux if available
-                tools="eza bat git-delta ripgrep fd starship zoxide atuin shellcheck"
+                tools="eza bat git-delta ripgrep fd fzf starship zoxide atuin mise direnv detect-secrets shellcheck"
                 # shellcheck disable=SC2086
                 brew install $tools
             elif command -v pacman &> /dev/null; then
-                tools="eza bat git-delta ripgrep fd starship zoxide atuin shellcheck"
+                tools="eza bat git-delta ripgrep fd fzf starship zoxide atuin mise direnv shellcheck"
                 # shellcheck disable=SC2086
                 sudo pacman -S --noconfirm --needed $tools
             elif command -v dnf &> /dev/null; then
-                tools="eza bat git-delta ripgrep fd-find starship zoxide atuin ShellCheck"
+                tools="eza bat git-delta ripgrep fd-find fzf starship zoxide atuin direnv ShellCheck"
                 # shellcheck disable=SC2086
                 sudo dnf install -y $tools
             elif command -v apt &> /dev/null; then
-                tools="bat ripgrep fd-find shellcheck"
+                tools="bat ripgrep fd-find fzf direnv shellcheck"
                 # shellcheck disable=SC2086
                 sudo apt update && sudo apt install -y $tools
                 echo "Note: eza, delta, starship, zoxide, and atuin may need manual installation on Debian/Ubuntu"
                 echo "      Consider installing Homebrew for Linux to get all tools: https://brew.sh/"
             elif command -v zypper &> /dev/null; then
-                tools="bat ripgrep fd starship zoxide ShellCheck"
+                tools="bat ripgrep fd fzf starship zoxide direnv ShellCheck"
                 # shellcheck disable=SC2086
                 sudo zypper install -y --no-confirm $tools
                 echo "Note: eza, delta, and atuin may need manual installation on SUSE"
@@ -92,7 +92,7 @@ install_modern_tools() {
             ;;
         Darwin*)
             if command -v brew &> /dev/null; then
-                tools="eza bat git-delta ripgrep fd starship zoxide atuin shellcheck"
+                tools="eza bat git-delta ripgrep fd fzf starship zoxide atuin mise direnv detect-secrets shellcheck"
                 # shellcheck disable=SC2086
                 brew install $tools
             else
@@ -100,6 +100,19 @@ install_modern_tools() {
             fi
             ;;
     esac
+}
+
+# Install the binary required by the Deja Zsh integration
+install_deja() {
+    if command -v deja &> /dev/null; then
+        return
+    fi
+
+    if command -v brew &> /dev/null; then
+        brew install Giammarco-Ferranti/deja/deja
+    else
+        echo "Note: Deja suggestions require a separate binary: https://github.com/Giammarco-Ferranti/deja"
+    fi
 }
 
 # Function to install pre-commit
@@ -164,11 +177,13 @@ case "$os_name" in
     Linux*)
         check_and_update_zsh
         install_modern_tools
+        install_deja
         install_precommit
         ;;
     Darwin*)
         check_and_update_zsh
         install_modern_tools
+        install_deja
         install_precommit
         ;;
     *)
@@ -221,9 +236,11 @@ if command -v zsh &> /dev/null && [[ -f "$HOME/.local/share/zinit/zinit.git/zini
     echo "Installing Zsh plugins..."
     zsh -c '
         source "$HOME/.local/share/zinit/zinit.git/zinit.zsh"
-        zinit light "zsh-users/zsh-autosuggestions"
-        zinit light "zsh-users/zsh-syntax-highlighting"
         zinit light "jeffreytse/zsh-vi-mode"
+        zinit light "Aloxaf/fzf-tab"
+        AUTOPAIR_INHIBIT_INIT=1 zinit light "hlissner/zsh-autopair"
+        zinit light "Giammarco-Ferranti/deja"
+        zinit light "zsh-users/zsh-syntax-highlighting"
         echo "Plugins installed successfully!"
     ' 2>/dev/null || echo "Plugin installation will happen on first shell startup."
 fi
@@ -255,7 +272,7 @@ fi
 echo "🎉 Zsh setup complete!"
 echo "📋 What was installed:"
 echo "  • Zsh shell and modern tools (eza, bat, delta, etc.)"
-echo "  • Zinit plugin manager with 3 essential plugins"
+echo "  • Zinit plugins for completion, pairing, suggestions, and highlighting"
 echo "  • Optimized configuration with lazy-loading"
 echo ""
 echo "🚀 To start using: restart your terminal or run 'source ~/.zshenv'"

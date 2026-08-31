@@ -37,7 +37,11 @@ _apply_custom_keybindings() {
   bindkey '^b' backward-word
 
   # Enhanced completion navigation
-  bindkey '^i' complete-word
+  if (( ${+widgets[fzf-tab-complete]} )); then
+    bindkey '^i' fzf-tab-complete
+  else
+    bindkey '^i' complete-word
+  fi
   bindkey '^[[Z' reverse-menu-complete  # Shift+Tab
 
   # Quick reload config
@@ -64,10 +68,6 @@ _apply_custom_keybindings() {
   bindkey '^[[1;5D' backward-word    # Ctrl+Left
   bindkey '^[[1;5C' forward-word     # Ctrl+Right
 
-  # Auto-suggestion accept
-  bindkey '^y' autosuggest-accept
-  bindkey '^[[1;5F' autosuggest-accept  # Ctrl+End
-
   # Session pickers
   bindkey '^o' sesh-sessions
   bindkey '^[s' sesh-sessions-gum
@@ -75,6 +75,9 @@ _apply_custom_keybindings() {
   # Search in command history with current input
   bindkey '^[[A' history-beginning-search-backward-end  # Up arrow
   bindkey '^[[B' history-beginning-search-forward-end   # Down arrow
+
+  # Initialize autopair after zsh-vi-mode has finalized its keymap.
+  (( ${+functions[autopair-init]} )) && autopair-init
 }
 
 # Insert sudo at beginning of line

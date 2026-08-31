@@ -20,6 +20,18 @@ alias so="source $ZDOTDIR/.zshrc"
 alias tms="sh $HOME/.config/zsh/scripts/shell/session-wizard.sh"
 alias vim="nvim"
 
+if command -v mise &> /dev/null; then
+  alias m="mise"
+  alias mr="mise run"
+  alias mx="mise exec --"
+  (( $+functions[compdef] )) && compdef m=mise
+fi
+
+if command -v direnv &> /dev/null; then
+  alias da="direnv allow"
+  alias dr="direnv reload"
+fi
+
 # Ensure vim alias uses proper completion
 if (( $+functions[compdef] )); then
   compdef vim=nvim
