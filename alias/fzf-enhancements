@@ -27,7 +27,7 @@ glog() {
 # Process finder with kill option (renamed from pkill to avoid shadowing system command)
 fpkill() {
   local pid
-  pid=$(ps -eo pid,ppid,user,comm --no-headers |
+  pid=$(ps -eo pid=,ppid=,user=,comm= |
     fzf --header="Select process to kill" \
         --preview 'ps -f -p {1}' \
         --preview-window=down:3:wrap |

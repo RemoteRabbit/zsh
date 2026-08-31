@@ -24,16 +24,27 @@ cleanup_backups() {
     echo "📁 Cleaning backup directories..."
 
     if [[ -d "$CONFIG_DIR/backups" ]]; then
-        local backup_count
-        backup_count=$(find "$CONFIG_DIR/backups" -maxdepth 1 -type d ! -path "$CONFIG_DIR/backups" | wc -l)
+        shopt -s nullglob
+        local os_name
+        os_name=$(uname -s)
+        local backups=("$CONFIG_DIR/backups"/*/)
+        local backup_count=${#backups[@]}
         if [[ $backup_count -gt 0 ]]; then
             echo "Found $backup_count backup directories"
             if confirm "Remove all backups except the 3 most recent?"; then
                 # Keep only the 3 most recent backups
-                find "$CONFIG_DIR/backups" -maxdepth 1 -type d ! -path "$CONFIG_DIR/backups" -printf '%T@ %p\n' | sort -rn | tail -n +4 | cut -d' ' -f2- | while read -r old_backup; do
-                    rm -rf "$CONFIG_DIR/backups/$old_backup"
+                while IFS= read -r old_backup; do
+                    rm -rf -- "$old_backup"
                     echo "Removed: $old_backup"
-                done
+                done < <(
+                    for backup in "${backups[@]}"; do
+                        if [[ $os_name == Darwin* ]]; then
+                            stat -f '%m %N' "$backup"
+                        else
+                            stat -c '%Y %n' "$backup"
+                        fi
+                    done | sort -rn | tail -n +4 | cut -d' ' -f2-
+                )
                 echo "✅ Backup cleanup complete"
             fi
         else
