@@ -1,5 +1,8 @@
 # Zsh performance benchmarking utilities
 
+# Load datetime module for cross-platform timing
+zmodload zsh/datetime 2>/dev/null
+
 # Benchmark zsh startup time
 zsh-benchmark() {
   echo "Running Zsh startup benchmark..."
@@ -7,12 +10,12 @@ zsh-benchmark() {
 
   local total_time=0
   for i in {1..10}; do
-    local start_time=$(date +%s%3N)
+    local start=$EPOCHREALTIME
     ZSH_BENCHMARK=0 zsh -i -c 'exit' 2>/dev/null
-    local end_time=$(date +%s%3N)
-    local duration=$((end_time - start_time))
-    total_time=$((total_time + duration))
-    echo "Run $i: ${duration}ms"
+    local end=$EPOCHREALTIME
+    local ms=$(( (${end%.*}${end#*.} - ${start%.*}${start#*.}) / 1000000 ))
+    total_time=$((total_time + ms))
+    echo "Run $i: ${ms}ms"
   done
 
   local avg_time=$((total_time / 10))
@@ -24,11 +27,11 @@ zsh-benchmark() {
 
 # Quick startup time check
 zsh-time() {
-  local start_time=$(date +%s%3N)
+  local start=$EPOCHREALTIME
   zsh -i -c 'exit' 2>/dev/null
-  local end_time=$(date +%s%3N)
-  local duration=$((end_time - start_time))
-  echo "Startup time: ${duration}ms"
+  local end=$EPOCHREALTIME
+  local ms=$(( (${end%.*}${end#*.} - ${start%.*}${start#*.}) / 1000000 ))
+  echo "Startup time: ${ms}ms"
 }
 
 # Show what's slowing down startup

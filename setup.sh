@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+# Get the directory where this script is located
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 # Get the OS name
 os_name=$(uname -s)
 
@@ -12,40 +15,30 @@ check_and_update_zsh() {
     else
         echo "Zsh is already installed."
 
-        # Check if Zsh is up-to-date
-        current_zsh_version=$(zsh --version | awk '{print $2}')
-        latest_zsh_version=$(get_latest_zsh_version)
-
-        if [ "$current_zsh_version" != "$latest_zsh_version" ]; then
-            echo "Zsh is not up-to-date. Updating Zsh..."
-            install_zsh
+        # Let package manager handle updates (more reliable than parsing versions)
+        if command -v brew &> /dev/null; then
+            echo "Upgrading Zsh via Homebrew..."
+            brew upgrade zsh 2>/dev/null || echo "Zsh is up-to-date."
+        elif command -v pacman &> /dev/null; then
+            echo "Updating Zsh via pacman..."
+            sudo pacman -S --noconfirm --needed zsh
+        elif command -v dnf &> /dev/null; then
+            echo "Updating Zsh via dnf..."
+            sudo dnf upgrade -y zsh
+        elif command -v apt &> /dev/null; then
+            echo "Updating Zsh via apt..."
+            sudo apt update && sudo apt install -y --only-upgrade zsh
         else
-            echo "Zsh is up-to-date."
+            echo "No supported package manager found; skipping Zsh update."
         fi
-    fi
-}
-
-# Function to get the latest Zsh version
-get_latest_zsh_version() {
-    if command -v dnf &> /dev/null; then
-        dnf info zsh | grep -m1 "Version" | awk '{print $3}'
-    elif command -v yum &> /dev/null; then
-        yum info zsh | grep -m1 "Version" | awk '{print $3}'
-    elif command -v apt &> /dev/null; then
-        apt-cache policy zsh | grep -m1 "Candidate:" | awk '{print $2}'
-    elif command -v zypper &> /dev/null; then
-        zypper info zsh | grep -m1 "Version" | awk '{print $3}'
-    elif command -v pacman &> /dev/null; then
-        pacman -Si zsh | grep -m1 "Version" | awk '{print $3}'
-    else
-        echo "Unable to determine the latest Zsh version."
-        exit 1
     fi
 }
 
 # Function to install Zsh
 install_zsh() {
-    if command -v dnf &> /dev/null; then
+    if command -v brew &> /dev/null; then
+        brew install zsh
+    elif command -v dnf &> /dev/null; then
         sudo dnf install -y zsh
     elif command -v yum &> /dev/null; then
         sudo yum install -y zsh
@@ -70,25 +63,25 @@ install_modern_tools() {
         Linux*)
             if command -v brew &> /dev/null; then
                 # Use Homebrew on Linux if available
-                tools="eza bat git-delta ripgrep fd starship zoxide atuin shellcheck"
+                tools="eza bat git-delta ripgrep fd fzf starship zoxide atuin mise direnv detect-secrets shellcheck"
                 # shellcheck disable=SC2086
                 brew install $tools
             elif command -v pacman &> /dev/null; then
-                tools="eza bat delta ripgrep fd starship zoxide atuin shellcheck"
+                tools="eza bat git-delta ripgrep fd fzf starship zoxide atuin mise direnv shellcheck"
                 # shellcheck disable=SC2086
                 sudo pacman -S --noconfirm --needed $tools
             elif command -v dnf &> /dev/null; then
-                tools="eza bat git-delta ripgrep fd-find starship zoxide atuin ShellCheck"
+                tools="eza bat git-delta ripgrep fd-find fzf starship zoxide atuin direnv ShellCheck"
                 # shellcheck disable=SC2086
                 sudo dnf install -y $tools
             elif command -v apt &> /dev/null; then
-                tools="bat ripgrep fd-find shellcheck"
+                tools="bat ripgrep fd-find fzf direnv shellcheck"
                 # shellcheck disable=SC2086
                 sudo apt update && sudo apt install -y $tools
                 echo "Note: eza, delta, starship, zoxide, and atuin may need manual installation on Debian/Ubuntu"
                 echo "      Consider installing Homebrew for Linux to get all tools: https://brew.sh/"
             elif command -v zypper &> /dev/null; then
-                tools="bat ripgrep fd starship zoxide ShellCheck"
+                tools="bat ripgrep fd fzf starship zoxide direnv ShellCheck"
                 # shellcheck disable=SC2086
                 sudo zypper install -y --no-confirm $tools
                 echo "Note: eza, delta, and atuin may need manual installation on SUSE"
@@ -99,7 +92,7 @@ install_modern_tools() {
             ;;
         Darwin*)
             if command -v brew &> /dev/null; then
-                tools="eza bat git-delta ripgrep fd starship zoxide atuin shellcheck"
+                tools="eza bat git-delta ripgrep fd fzf starship zoxide atuin mise direnv detect-secrets shellcheck"
                 # shellcheck disable=SC2086
                 brew install $tools
             else
@@ -109,40 +102,73 @@ install_modern_tools() {
     esac
 }
 
+# Install the binary required by the Deja Zsh integration
+install_deja() {
+    if command -v deja &> /dev/null; then
+        return
+    fi
+
+    if command -v brew &> /dev/null; then
+        brew install Giammarco-Ferranti/deja/deja
+    else
+        echo "Note: Deja suggestions require a separate binary: https://github.com/Giammarco-Ferranti/deja"
+    fi
+}
+
 # Function to install pre-commit
 install_precommit() {
     echo "Installing pre-commit..."
 
-    # Try pip first, then package manager
+    # Prefer package manager, then pip
+    case "$os_name" in
+        Darwin*)
+            if command -v brew &> /dev/null; then
+                brew install pre-commit
+                echo "✅ pre-commit installed via Homebrew"
+                return
+            fi
+            ;;
+        Linux*)
+            if command -v pacman &> /dev/null; then
+                sudo pacman -S --noconfirm --needed pre-commit
+                echo "✅ pre-commit installed via pacman"
+                return
+            elif command -v dnf &> /dev/null; then
+                sudo dnf install -y pre-commit
+                echo "✅ pre-commit installed via dnf"
+                return
+            elif command -v apt &> /dev/null; then
+                sudo apt install -y pre-commit
+                echo "✅ pre-commit installed via apt"
+                return
+            fi
+            ;;
+    esac
+
+    # Fallback to pip
     if command -v pip3 &> /dev/null; then
         pip3 install --user pre-commit
         echo "✅ pre-commit installed via pip3"
+
+        # Check if pre-commit is in PATH, warn if not
+        if ! command -v pre-commit &> /dev/null; then
+            user_base="$(python3 -m site --user-base 2>/dev/null || echo "$HOME/.local")"
+            echo "⚠️  pre-commit installed but not in PATH"
+            echo "   Add $user_base/bin to your PATH to use it"
+        fi
     elif command -v pip &> /dev/null; then
         pip install --user pre-commit
         echo "✅ pre-commit installed via pip"
+
+        # Check if pre-commit is in PATH, warn if not
+        if ! command -v pre-commit &> /dev/null; then
+            user_base="$(python -m site --user-base 2>/dev/null || echo "$HOME/.local")"
+            echo "⚠️  pre-commit installed but not in PATH"
+            echo "   Add $user_base/bin to your PATH to use it"
+        fi
     else
-        case "$os_name" in
-            Linux*)
-                if command -v pacman &> /dev/null; then
-                    sudo pacman -S --noconfirm --needed pre-commit
-                elif command -v dnf &> /dev/null; then
-                    sudo dnf install -y pre-commit
-                elif command -v apt &> /dev/null; then
-                    sudo apt install -y pre-commit
-                else
-                    echo "⚠️  Could not install pre-commit automatically"
-                    echo "   Please install manually: pip install pre-commit"
-                fi
-                ;;
-            Darwin*)
-                if command -v brew &> /dev/null; then
-                    brew install pre-commit
-                else
-                    echo "⚠️  Could not install pre-commit automatically"
-                    echo "   Please install manually: pip install pre-commit"
-                fi
-                ;;
-        esac
+        echo "⚠️  Could not install pre-commit automatically"
+        echo "   Please install manually: pip install pre-commit"
     fi
 }
 
@@ -151,11 +177,13 @@ case "$os_name" in
     Linux*)
         check_and_update_zsh
         install_modern_tools
+        install_deja
         install_precommit
         ;;
     Darwin*)
-        check_and_update_zsh "brew install" "brew info"
+        check_and_update_zsh
         install_modern_tools
+        install_deja
         install_precommit
         ;;
     *)
@@ -178,12 +206,18 @@ fi
 
 # Create directory and symlinks
 mkdir -p "$HOME/.config"
-ln -sf "$HOME/repos/personal/zsh/.zshenv" "$HOME/.zshenv"
-ln -sf "$HOME/repos/personal/zsh" "$HOME/.config/zsh"
+ln -sf "$script_dir/.zshenv" "$HOME/.zshenv"
+ln -sf "$script_dir" "$HOME/.config/zsh"
 
 # Install Zinit plugin manager
 echo "Installing Zinit plugin manager..."
 if [[ ! -f "$HOME/.local/share/zinit/zinit.git/zinit.zsh" ]]; then
+    # Ensure git is available
+    if ! command -v git &> /dev/null; then
+        echo "⚠️  Git is required to install Zinit. Please install git first."
+        exit 1
+    fi
+
     command mkdir -p "$HOME/.local/share/zinit" && command chmod g-rwX "$HOME/.local/share/zinit"
     command git clone --depth=1 https://github.com/zdharma-continuum/zinit "$HOME/.local/share/zinit/zinit.git"
     echo "Zinit installed successfully!"
@@ -202,9 +236,11 @@ if command -v zsh &> /dev/null && [[ -f "$HOME/.local/share/zinit/zinit.git/zini
     echo "Installing Zsh plugins..."
     zsh -c '
         source "$HOME/.local/share/zinit/zinit.git/zinit.zsh"
-        zinit light "zsh-users/zsh-autosuggestions"
-        zinit light "zsh-users/zsh-syntax-highlighting"
         zinit light "jeffreytse/zsh-vi-mode"
+        zinit light "Aloxaf/fzf-tab"
+        AUTOPAIR_INHIBIT_INIT=1 zinit light "hlissner/zsh-autopair"
+        zinit light "Giammarco-Ferranti/deja"
+        zinit light "zsh-users/zsh-syntax-highlighting"
         echo "Plugins installed successfully!"
     ' 2>/dev/null || echo "Plugin installation will happen on first shell startup."
 fi
@@ -212,9 +248,15 @@ fi
 # Setup pre-commit hooks
 if command -v pre-commit &> /dev/null; then
     echo "Setting up pre-commit hooks..."
-    cd "$HOME/repos/personal/zsh" || exit 1
-    pre-commit install
-    pre-commit install --hook-type commit-msg
+    cd "$script_dir" || exit 1
+
+    # Only install hooks if this is a git repository
+    if [[ -d ".git" ]]; then
+        pre-commit install
+        pre-commit install --hook-type commit-msg
+    else
+        echo "⚠️  Not a git repository, skipping pre-commit hook installation"
+    fi
 
     # Initialize secrets baseline
     if command -v detect-secrets &> /dev/null; then
@@ -230,7 +272,7 @@ fi
 echo "🎉 Zsh setup complete!"
 echo "📋 What was installed:"
 echo "  • Zsh shell and modern tools (eza, bat, delta, etc.)"
-echo "  • Zinit plugin manager with 3 essential plugins"
+echo "  • Zinit plugins for completion, pairing, suggestions, and highlighting"
 echo "  • Optimized configuration with lazy-loading"
 echo ""
 echo "🚀 To start using: restart your terminal or run 'source ~/.zshenv'"

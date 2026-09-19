@@ -86,17 +86,24 @@ Each file in `alias/` serves a specific purpose:
 ### Zinit Configuration
 - **Plugin Manager**: Zinit for fast, parallel loading
 - **Essential Plugins**:
-  - `zsh-autosuggestions` - Command suggestions
+  - `deja` - Predictive command suggestions
+  - `fzf-tab` - Fuzzy completion selection
+  - `zsh-autopair` - Automatic delimiter pairing
   - `zsh-syntax-highlighting` - Command highlighting
   - `zsh-vi-mode` - Enhanced vi mode
+- **Workflow Plugins**:
+  - `zsh-alias-finder` - Suggest aliases for commands
+  - `colored-man-pages-plus` - Colorized manual pages
 - **Annexes**: Additional functionality modules
 
 ### Plugin Organization
 ```zsh
 # Plugin loading in .zshrc
-zinit light "zsh-users/zsh-autosuggestions"
-zinit light "zsh-users/zsh-syntax-highlighting"
 zinit light "jeffreytse/zsh-vi-mode"
+zinit light "Aloxaf/fzf-tab"
+zinit light "hlissner/zsh-autopair"
+zinit light "Giammarco-Ferranti/deja"
+zinit light "zsh-users/zsh-syntax-highlighting"
 ```
 
 ## 🛠 Tool Integration
@@ -113,14 +120,15 @@ zinit light "jeffreytse/zsh-vi-mode"
 - **FZF**: Fuzzy finder with custom previews and keybindings
 - **Starship**: Fast, customizable prompt
 - **Zoxide**: Smart directory jumping with frecency
-- **Atuin**: Enhanced shell history (lazy-loaded)
+- **Atuin**: Enhanced shell history
 
 ## 🚀 Performance Optimizations
 
 ### Lazy Loading
-Heavy tools are loaded only when first used:
-- `atuin` - History enhancement
+Work that is not needed to render the initial prompt is deferred:
 - `carapace` - Advanced completion
+- `luarocks` - Lua environment initialization
+- Nonessential Zinit plugins, including syntax highlighting
 
 ### Compilation
 Configuration files are compiled with `zcompile` for faster loading.

@@ -27,29 +27,38 @@ goto-open() {
 
 # History search is handled in fzf-enhancements
 
-# Enhanced process management
-pgrep() {
+# Enhanced process management (renamed from pgrep to avoid shadowing system command)
+psg() {
   if [[ $# -eq 0 ]]; then
-    echo "Usage: pgrep <pattern>"
+    echo "Usage: psg <pattern>"
     return 1
   fi
-  ps aux | rg "$1" | grep -v "rg $1"
+
+  if command -v rg &> /dev/null; then
+    ps aux | rg "$1" | command grep -v "rg $1"
+  else
+    ps aux | command grep "$1" | command grep -v "grep $1"
+  fi
 }
 
 # Interactive process killer is handled in fzf-enhancements
 # Simple process killer by pattern
-pkill-pattern() {
+kill-by-pattern() {
   if [[ $# -eq 0 ]]; then
-    echo "Usage: pkill-pattern <pattern>"
+    echo "Usage: kill-by-pattern <pattern>"
     return 1
   fi
 
   echo "Processes matching '$1':"
-  pgrep "$1"
+  psg "$1"
   echo ""
   read "response?Kill these processes? (y/N): "
   if [[ "$response" =~ ^[Yy]$ ]]; then
-    ps aux | rg "$1" | grep -v "rg $1" | awk '{print $2}' | xargs -I {} kill {}
+    if command -v rg &> /dev/null; then
+      ps aux | rg "$1" | command grep -v "rg $1" | awk '{print $2}' | xargs -I {} kill {}
+    else
+      ps aux | command grep "$1" | command grep -v "grep $1" | awk '{print $2}' | xargs -I {} kill {}
+    fi
     echo "Processes killed."
   else
     echo "Cancelled."
@@ -137,7 +146,15 @@ sysinfo() {
   echo "Hostname: $(hostname)"
   echo "Uptime: $(uptime | awk -F'up ' '{print $2}' | awk -F', load' '{print $1}')"
   echo "Load: $(uptime | awk -F'load average:' '{print $2}')"
-  echo "Memory: $(free -h | grep '^Mem:' | awk '{print $3 "/" $2}')"
+
+  # Cross-platform memory check
+  if [[ $(uname) == "Darwin" ]]; then
+    local mem="$(vm_stat 2>/dev/null | awk '/Pages (free|active|inactive|speculative|wired)/ {sum+=$NF} END{printf "%.1fGB", (sum*4096)/1024/1024/1024}')"
+    echo "Memory: ${mem:-unknown}"
+  else
+    echo "Memory: $(free -h 2>/dev/null | awk '/^Mem:/ {print $3 "/" $2}' || echo 'unknown')"
+  fi
+
   echo "Disk: $(df -h / | tail -1 | awk '{print $3 "/" $2 " (" $5 " used)"}')"
   echo "Shell: $SHELL ($ZSH_VERSION)"
 }
@@ -150,13 +167,14 @@ port() {
   fi
 
   local port="$1"
-  local result=$(netstat -ln | grep ":$port ")
 
-  if [[ -n "$result" ]]; then
-    echo "Port $port is in use:"
-    echo "$result"
+  # Try lsof first (works on macOS and Linux)
+  if command -v lsof &> /dev/null; then
+    lsof -nP -iTCP:"$port" -sTCP:LISTEN
+  elif command -v ss &> /dev/null; then
+    ss -lnt | command grep -E "[:.]$port\s"
   else
-    echo "Port $port is available"
+    netstat -ln 2>/dev/null | command grep "[:.]$port "
   fi
 }
 

@@ -8,7 +8,11 @@ alias .....="cd ../../../.."
 
 # Directory listing with context
 alias l="ls -1"
-alias ll="eza --tree --level 2"
+if command -v eza &> /dev/null; then
+  alias ll="eza --tree --level 2"
+else
+  alias ll="ls -la"
+fi
 alias lh="ls -lah"
 alias ldot="ls -ld .*"
 

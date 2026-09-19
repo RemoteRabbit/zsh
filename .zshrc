@@ -3,9 +3,6 @@ if [[ "$ZSH_BENCHMARK" == "1" ]]; then
   zmodload zsh/zprof
 fi
 
-# Disable terminal flow control so Ctrl+s is available for keybindings
-stty -ixon
-
 # Source alias files
 for file in $ZDOTDIR/alias/*; do
   [[ -r "$file" ]] && [[ -f "$file" ]] && source "$file"
@@ -23,9 +20,11 @@ fi
 
 # Load recovery system
 [[ -r "$ZDOTDIR/recovery.zsh" ]] && source "$ZDOTDIR/recovery.zsh"
+[[ -t 0 ]] && stty -ixon
 
 # Zsh options
 setopt autocd autopushd
+setopt extended_glob
 setopt extended_history       # record timestamp of command in HISTFILE
 setopt hist_expire_dups_first # delete duplicates first when HISTFILE size exceeds HISTSIZE
 setopt hist_ignore_dups       # ignore duplicated commands history list
@@ -39,11 +38,24 @@ SAVEHIST=10000
 # Initialize completion system (optimized)
 autoload -Uz compinit
 # Only regenerate compdump once per day for faster loading
-if [[ -n ~/.zcompdump(#qN.mh+24) ]]; then
-  compinit
+_zcompdump="${ZDOTDIR:-$HOME}/.zcompdump"
+if [[ -n "$_zcompdump"(#qN.mh+24) ]]; then
+  compinit -d "$_zcompdump"
 else
-  compinit -C  # Skip security check for faster startup
+  compinit -C -d "$_zcompdump"  # Skip security check for faster startup
 fi
+unset _zcompdump
+
+# Source local configuration after compinit so completion files can use compdef
+for file in "$ZDOTDIR"/alias/*(N.); do
+  [[ -r "$file" ]] && source "$file"
+done
+
+for file in "$ZDOTDIR"/extras/*(N.); do
+  [[ -r "$file" ]] && source "$file"
+done
+
+[[ -r "$ZDOTDIR/recovery.zsh" ]] && source "$ZDOTDIR/recovery.zsh"
 
 # Enhanced completion styles
 zstyle ':completion:*' matcher-list '' 'm:{a-zA-Z}={A-Za-z}' 'r:|[._-]=* r:|=*' 'l:|=* r:|=*'
@@ -55,18 +67,14 @@ zstyle ':completion:*' completer _complete _match _approximate
 zstyle ':completion:*:match:*' original only
 zstyle ':completion:*:approximate:*' max-errors 1 numeric
 
-# Oh My Zsh configuration
-DISABLE_UPDATE_PROMPT="true"
-ENABLE_CORRECTION="true"
-COMPLETION_WAITING_DOTS="true"
+# Initialize interactive tools when installed
+command -v starship &> /dev/null && eval "$(starship init zsh)"
+command -v zoxide &> /dev/null && eval "$(zoxide init zsh)"
+command -v atuin &> /dev/null && eval "$(atuin init zsh)"
+command -v mise &> /dev/null && eval "$(mise activate zsh)"
+command -v direnv &> /dev/null && eval "$(direnv hook zsh)"
 
-# Initialize tools (lightweight ones)
-command -v starship >/dev/null 2>&1 && eval "$(starship init zsh)"
-command -v zoxide >/dev/null 2>&1 && eval "$(zoxide init zsh)"
-command -v atuin >/dev/null 2>&1 && eval "$(atuin init zsh)"
-command -v luarocks >/dev/null 2>&1 && eval "$(luarocks path)"
-
-# Lazy-load heavy tools
+# Lazy-load heavier completion generation at the first prompt
 _load_carapace() {
   unfunction _load_carapace
   export CARAPACE_BRIDGES='zsh,fish,bash,inshellisense'
@@ -79,18 +87,8 @@ if command -v carapace &> /dev/null; then
   add-zsh-hook precmd _load_carapace
 fi
 
-# Homebrew setup
-if [[ $(uname) == "Darwin" ]]; then
-  # macOS Homebrew
-  export PATH="/opt/homebrew/bin:$PATH"
-  eval "$(/opt/homebrew/bin/brew shellenv)"
-elif [[ $(uname) == "Linux" ]] && command -v brew &> /dev/null; then
-  # Linux Homebrew
-  eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
-fi
-
 # Initialize Zinit plugin manager
-if [[ ! -f $HOME/.local/share/zinit/zinit.git/zinit.zsh ]]; then
+if [[ ! -f "$HOME/.local/share/zinit/zinit.git/zinit.zsh" ]]; then
     print -P "%F{33} %F{220}Installing %F{33}ZDHARMA-CONTINUUM%F{220} Initiative Plugin Manager (%F{33}zdharma-continuum/zinit%F{220})…%f"
     command mkdir -p "$HOME/.local/share/zinit" && command chmod g-rwX "$HOME/.local/share/zinit"
     command git clone https://github.com/zdharma-continuum/zinit "$HOME/.local/share/zinit/zinit.git" && \
@@ -98,32 +96,45 @@ if [[ ! -f $HOME/.local/share/zinit/zinit.git/zinit.zsh ]]; then
         print -P "%F{160} The clone has failed.%f%b"
 fi
 
-source "$HOME/.local/share/zinit/zinit.git/zinit.zsh"
-autoload -Uz _zinit
-(( ${+_comps} )) && _comps[zinit]=_zinit
+if [[ -r "$HOME/.local/share/zinit/zinit.git/zinit.zsh" ]]; then
+  source "$HOME/.local/share/zinit/zinit.git/zinit.zsh"
+  autoload -Uz _zinit
+  (( ${+_comps} )) && _comps[zinit]=_zinit
 
-# Load plugins with Zinit (fast, automatic updates)
-zinit light "zsh-users/zsh-autosuggestions"
-zinit light "zsh-users/zsh-syntax-highlighting"
-zinit light "jeffreytse/zsh-vi-mode"
+  # Vi-mode widgets needed by keybindings load synchronously.
+  zinit light "jeffreytse/zsh-vi-mode"
 
-# Auto-suggestions styling
-ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=8,italic'
-ZSH_AUTOSUGGEST_STRATEGY=(history completion)
-ZSH_AUTOSUGGEST_BUFFER_MAX_SIZE=20
-ZSH_AUTOSUGGEST_USE_ASYNC=1
+  # Completion and pairing widgets must load after compinit and before highlighters.
+  zinit light "Aloxaf/fzf-tab"
+  zstyle ':fzf-tab:*' switch-group '<' '>'
+  zstyle ':fzf-tab:complete:cd:*' fzf-preview 'eza -1 --color=always $realpath 2>/dev/null || ls -1 $realpath'
+  AUTOPAIR_INHIBIT_INIT=1
+  zinit light "hlissner/zsh-autopair"
+  unset AUTOPAIR_INHIBIT_INIT
 
-# Optional: Load annexes for additional functionality
-zinit light-mode for \
-    zdharma-continuum/zinit-annex-as-monitor \
-    zdharma-continuum/zinit-annex-bin-gem-node \
-    zdharma-continuum/zinit-annex-patch-dl \
-    zdharma-continuum/zinit-annex-rust
+  # Nonessential plugins load after the first prompt.
+  export DEJA_ACCEPT_KEY='^Y'
+  export DEJA_CYCLE_KEY=''
+  zinit ice wait"0" lucid depth=1
+  zinit light "Giammarco-Ferranti/deja"
+  zinit ice wait"0" lucid depth=1
+  zinit light "akash329d/zsh-alias-finder"
+  zinit ice wait"0" lucid depth=1
+  zinit light "diverdale/colored-man-pages-plus"
+  zstyle ':colored-man:theme' name catppuccin
+  zinit ice wait"0" lucid depth=1
+  zinit light "zsh-users/zsh-syntax-highlighting"
 
-# Enable Extended globbing
-setopt extended_glob
+  # Optional annexes for additional Zinit functionality
+  zinit light-mode for \
+      zdharma-continuum/zinit-annex-as-monitor \
+      zdharma-continuum/zinit-annex-bin-gem-node \
+      zdharma-continuum/zinit-annex-patch-dl \
+      zdharma-continuum/zinit-annex-rust
+fi
 
-# Carapace now loaded via lazy-loading above
+# Load custom keybindings after plugins so widgets exist
+[[ -r "$ZDOTDIR/keybindings.zsh" ]] && source "$ZDOTDIR/keybindings.zsh"
 
 # Source additional scripts
 if [[ -d "$ZDOTDIR/scripts/zsh" ]]; then
@@ -149,19 +160,24 @@ export FZF_DEFAULT_OPTS="
 "
 
 # Smart file finder with ripgrep content preview
-export FZF_DEFAULT_COMMAND='rg --files --hidden --follow --glob "!.git/*" --glob "!node_modules/*"'
-export FZF_CTRL_T_COMMAND='$FZF_DEFAULT_COMMAND'
+if command -v rg &> /dev/null; then
+  export FZF_DEFAULT_COMMAND='rg --files --hidden --follow --glob "!.git/*" --glob "!node_modules/*"'
+elif command -v fd &> /dev/null; then
+  export FZF_DEFAULT_COMMAND='fd --type f --hidden --follow --exclude .git --exclude node_modules'
+else
+  export FZF_DEFAULT_COMMAND='find . -type f'
+fi
+export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
 
-# Enhanced file preview with syntax highlighting
 export FZF_CTRL_T_OPTS="
   --preview 'bat --color=always --style=numbers --line-range=:500 {} 2>/dev/null || cat {} 2>/dev/null || tree -C {} 2>/dev/null'
   --bind 'ctrl-/:toggle-preview'
 "
 
-# Enhanced directory search
 export FZF_ALT_C_OPTS="
   --preview 'eza --tree --color=always {} | head -200'
 "
+export PATH="$HOME/.cargo/bin:$PATH"
 export EDITOR=nvim
 export DOCKER_CMD="podman --storage-opt overlay.ignore_chown_errors=true"
 export DOCKER_SOCK=/var/run/docker.sock
@@ -191,14 +207,11 @@ fi
 [[ -f "$HOME/.dart-cli-completion/zsh-config.zsh" ]] && . "$HOME/.dart-cli-completion/zsh-config.zsh" || true
 ## [/Completion]
 
-# Add PNPM to PATH if not already present
 case ":$PATH:" in
   *":$PNPM_HOME:"*) ;;
   *) export PATH="$PNPM_HOME:$PATH" ;;
 esac
 
-# Add Local bin to PATH
-# Add local bin to PATH
 export LOCAL_BIN="$HOME/.local/bin"
 case ":$PATH:" in
   *":$LOCAL_BIN:"*) ;;
@@ -215,3 +228,7 @@ fi
 
 #compdef databricks
 compdef _databricks databricks
+if command -v tfschema &> /dev/null; then
+  autoload -U +X bashcompinit && bashcompinit
+  complete -o nospace -C "$(command -v tfschema)" tfschema
+fi

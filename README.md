@@ -5,7 +5,7 @@ A highly optimized, modular Zsh configuration focused on productivity, performan
 ## ✨ Features
 
 ### 🚀 Performance Optimized
-- **Lazy-loading** for heavy tools (atuin, carapace)
+- **Lazy-loading** for generated completions and nonessential plugins
 - **Compiled configs** with zcompile for faster startup
 - **Smart completion** system with daily cache refresh
 - **Startup benchmarking** tools to monitor performance
@@ -19,10 +19,13 @@ A highly optimized, modular Zsh configuration focused on productivity, performan
 - **starship** - Fast, customizable prompt
 - **zoxide** - Smart directory jumping
 - **atuin** - Enhanced shell history
+- **mise** - Project tool versions and tasks
+- **direnv** - Per-directory environment activation
 
 ### 📦 Plugin Management
 - **Zinit** plugin manager for fast, automatic updates
-- **Essential plugins**: autosuggestions, syntax highlighting, vi-mode
+- **Essential plugins**: Deja suggestions, fzf-tab, autopair, syntax highlighting, vi-mode
+- **Workflow plugins**: alias finder and colored man pages
 - **One-command updates**: `zinit update`
 
 ### 🔧 Productivity Features
@@ -141,6 +144,8 @@ zsh/
 - `extract <archive>` - Smart archive extraction
 - `sysinfo` - System information summary
 - `weather [city]` - Get weather information
+- `m`, `mr`, `mx` - Mise, run a task, or execute with managed tools
+- `da`, `dr` - Allow or reload the current direnv environment
 
 ### Configuration Management
 - `config-health` - Check configuration health
@@ -169,7 +174,8 @@ zsh/
 
 ### History & Editing
 - `Ctrl+R` - Interactive history search
-- `Ctrl+Y` - Accept autosuggestion
+- `Ctrl+Y` - Accept Deja suggestion
+- `Tab` - Fuzzy completion with fzf-tab
 - `Ctrl+E` - Edit command in editor
 - `Alt+R` - Reload configuration
 
