@@ -61,10 +61,10 @@ ENABLE_CORRECTION="true"
 COMPLETION_WAITING_DOTS="true"
 
 # Initialize tools (lightweight ones)
-eval "$(starship init zsh)"
-eval "$(zoxide init zsh)"
-eval "$(atuin init zsh)"
-eval "$(luarocks path)"
+command -v starship >/dev/null 2>&1 && eval "$(starship init zsh)"
+command -v zoxide >/dev/null 2>&1 && eval "$(zoxide init zsh)"
+command -v atuin >/dev/null 2>&1 && eval "$(atuin init zsh)"
+command -v luarocks >/dev/null 2>&1 && eval "$(luarocks path)"
 
 # Lazy-load heavy tools
 _load_carapace() {
@@ -166,21 +166,29 @@ export EDITOR=nvim
 export DOCKER_CMD="podman --storage-opt overlay.ignore_chown_errors=true"
 export DOCKER_SOCK=/var/run/docker.sock
 export DOCKER_HOST=unix:///var/run/docker.sock
-export PNPM_HOME="/home/remoterabbit/.local/share/pnpm"
+export PNPM_HOME="$HOME/.local/share/pnpm"
 export GOPATH=$HOME/go
 export GOBIN=$GOPATH/bin
 export PATH=$PATH:$GOBIN
-export FLYCTL_INSTALL="/home/remoterabbit/.fly"
+export FLYCTL_INSTALL="$HOME/.fly"
 export PATH="$FLYCTL_INSTALL/bin:$PATH"
-eval "$(luarocks path)"
 export PYENV_ROOT="$HOME/.pyenv"
 export PATH="$PYENV_ROOT/bin:$PATH"
-eval "$(pyenv init --path)"
-eval "$(pyenv init -)"
+if command -v pyenv >/dev/null 2>&1; then
+  eval "$(pyenv init --path)"
+  eval "$(pyenv init -)"
+fi
+if command -v mise >/dev/null 2>&1; then
+  eval "$(mise activate zsh)"
+fi
+TENV_AUTO_INSTALL=true
+if command -v direnv >/dev/null 2>&1; then
+  eval "$(direnv hook zsh)"
+fi
 
 ## [Completion]
 ## Completion scripts setup. Remove the following line to uninstall
-[[ -f /home/remoterabbit/.dart-cli-completion/zsh-config.zsh ]] && . /home/remoterabbit/.dart-cli-completion/zsh-config.zsh || true
+[[ -f "$HOME/.dart-cli-completion/zsh-config.zsh" ]] && . "$HOME/.dart-cli-completion/zsh-config.zsh" || true
 ## [/Completion]
 
 # Add PNPM to PATH if not already present
@@ -196,6 +204,8 @@ case ":$PATH:" in
   *":$LOCAL_BIN:"*) ;;
   *) export PATH="$LOCAL_BIN:$PATH" ;;
 esac
+
+export PATH="$PATH:$HOME/.cargo/bin"
 
 # Show startup benchmark if enabled
 if [[ "$ZSH_BENCHMARK" == "1" ]]; then

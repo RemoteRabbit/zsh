@@ -46,3 +46,8 @@ edit() {
 alias repos="z repos"
 alias work="z work"
 alias config="z .config"
+
+# Sesh
+alias sp="sesh picker"
+alias sc="sesh clone"
+alias sn="sech connect ."
