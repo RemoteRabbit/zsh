@@ -76,6 +76,50 @@ _apply_custom_keybindings() {
   bindkey '^[[A' history-beginning-search-backward-end  # Up arrow
   bindkey '^[[B' history-beginning-search-forward-end   # Down arrow
 
+# Enable vi mode keybindings (if zsh-vi-mode plugin isn't handling this)
+bindkey -v
+
+# Enhanced navigation in vi mode
+bindkey -M vicmd 'H' beginning-of-line
+bindkey -M vicmd 'L' end-of-line
+bindkey -M vicmd 'K' history-beginning-search-backward
+bindkey -M vicmd 'J' history-beginning-search-forward
+
+# Quick command line editing
+autoload -Uz edit-command-line
+zle -N edit-command-line
+bindkey '^e' edit-command-line
+bindkey '^x^e' edit-command-line
+
+# Enhanced history search
+bindkey '^r' history-incremental-search-backward
+bindkey '^s' history-incremental-search-forward
+bindkey '^p' history-search-backward
+bindkey '^n' history-search-forward
+
+# Quick directory navigation
+bindkey -s '^f' 'f\n'  # Quick file finder
+bindkey -s '^j' 'j\n'  # Quick directory jumper
+bindkey -s '^g' 'search '  # Quick content search
+
+# Command line utilities
+bindkey '^u' backward-kill-line
+bindkey '^k' kill-line
+bindkey '^a' beginning-of-line
+bindkey '^e' end-of-line
+bindkey '^w' backward-kill-word
+bindkey '^b' backward-word
+bindkey '^f' forward-word
+
+# Enhanced completion navigation
+bindkey '^i' complete-word
+bindkey '^[[Z' reverse-menu-complete  # Shift+Tab
+
+# Quick reload config
+bindkey -s '^[r' 'source $ZDOTDIR/.zshrc\n'
+
+# Clear screen but keep scrollback
+bindkey '^l' clear-screen
   # Initialize autopair after zsh-vi-mode has finalized its keymap.
   (( ${+functions[autopair-init]} )) && autopair-init
 }
@@ -125,6 +169,45 @@ sesh-sessions-gum() {
   fi
 }
 zle -N sesh-sessions-gum
+
+# Sesh - tmux session picker (works outside tmux)
+sesh-sessions() {
+  zle -I
+  local session
+  session=$(sesh list | fzf --no-sort --prompt '⚡ ' \
+    --header '^a all ^t tmux ^x zoxide ^g config ^f find' \
+    --bind 'ctrl-a:change-prompt(⚡ )+reload(sesh list)' \
+    --bind 'ctrl-t:change-prompt(🪟 )+reload(sesh list -t)' \
+    --bind 'ctrl-g:change-prompt(⚙️ )+reload(sesh list -c)' \
+    --bind 'ctrl-x:change-prompt(📁 )+reload(sesh list -z)' \
+    --bind 'ctrl-f:change-prompt(🔎 )+reload(fd -H -d 2 -t d -E .Trash . ~)'
+  )
+  if [[ -n "$session" ]]; then
+    BUFFER="sesh connect \"$session\""
+    zle accept-line
+  else
+    zle reset-prompt
+  fi
+}
+zle -N sesh-sessions
+bindkey '^o' sesh-sessions
+
+# Sesh - tmux session picker via gum
+sesh-sessions-gum() {
+  zle -I
+  local session
+  session=$(sesh list | gum filter --limit 1 --fuzzy --no-sort \
+    --placeholder 'Pick a sesh' --prompt='⚡ '
+  )
+  if [[ -n "$session" ]]; then
+    BUFFER="sesh connect \"$session\""
+    zle accept-line
+  else
+    zle reset-prompt
+  fi
+}
+zle -N sesh-sessions-gum
+bindkey '^[s' sesh-sessions-gum
 
 # Search in command history with current input
 autoload -U history-search-end

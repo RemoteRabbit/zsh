@@ -3,7 +3,23 @@ if [[ "$ZSH_BENCHMARK" == "1" ]]; then
   zmodload zsh/zprof
 fi
 
-# Disable terminal flow control so Ctrl+s is available for keybindings
+# Source alias files
+for file in $ZDOTDIR/alias/*; do
+  [[ -r "$file" ]] && [[ -f "$file" ]] && source "$file"
+done
+
+# Load additional configuration files if they exist
+if [[ -d "$ZDOTDIR/extras" ]]; then
+  for file in $ZDOTDIR/extras/*; do
+    [[ -r "$file" ]] && [[ -f "$file" ]] && source "$file"
+  done
+fi
+
+# Load custom keybindings
+[[ -r "$ZDOTDIR/keybindings.zsh" ]] && source "$ZDOTDIR/keybindings.zsh"
+
+# Load recovery system
+[[ -r "$ZDOTDIR/recovery.zsh" ]] && source "$ZDOTDIR/recovery.zsh"
 [[ -t 0 ]] && stty -ixon
 
 # Zsh options
@@ -172,17 +188,18 @@ export GOBIN=$GOPATH/bin
 export PATH=$PATH:$GOBIN
 export FLYCTL_INSTALL="$HOME/.fly"
 export PATH="$FLYCTL_INSTALL/bin:$PATH"
-
-# LuaRocks environment is only needed when invoking Lua tooling.
-if (( $+commands[luarocks] )); then
-  _load_luarocks() {
-    eval "$(command luarocks path)"
-    unfunction luarocks
-    (( $+functions[lua] )) && unfunction lua
-    unfunction _load_luarocks
-  }
-  luarocks() { _load_luarocks; command luarocks "$@" }
-  (( $+commands[lua] )) && lua() { _load_luarocks; command lua "$@" }
+export PYENV_ROOT="$HOME/.pyenv"
+export PATH="$PYENV_ROOT/bin:$PATH"
+if command -v pyenv >/dev/null 2>&1; then
+  eval "$(pyenv init --path)"
+  eval "$(pyenv init -)"
+fi
+if command -v mise >/dev/null 2>&1; then
+  eval "$(mise activate zsh)"
+fi
+TENV_AUTO_INSTALL=true
+if command -v direnv >/dev/null 2>&1; then
+  eval "$(direnv hook zsh)"
 fi
 
 ## [Completion]
@@ -201,12 +218,16 @@ case ":$PATH:" in
   *) export PATH="$LOCAL_BIN:$PATH" ;;
 esac
 
+export PATH="$PATH:$HOME/.cargo/bin"
+
 # Show startup benchmark if enabled
 if [[ "$ZSH_BENCHMARK" == "1" ]]; then
   echo "Startup time report:"
   zprof | head -20
 fi
 
+#compdef databricks
+compdef _databricks databricks
 if command -v tfschema &> /dev/null; then
   autoload -U +X bashcompinit && bashcompinit
   complete -o nospace -C "$(command -v tfschema)" tfschema

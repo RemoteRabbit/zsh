@@ -19,6 +19,16 @@ alias rw="cd $HOME/repos/work"
 alias so="source $ZDOTDIR/.zshrc"
 alias tms="sh $HOME/.config/zsh/scripts/shell/session-wizard.sh"
 alias vim="nvim"
+vv() {
+  # Assumes all configs exist in directories named ~/.config/nvim-*
+  local config=$(fd --max-depth 1 --glob 'nvim-*' ~/.config | fzf --prompt="Neovim Configs > " --height=~50% --layout=reverse --border --exit-0)
+
+  # If I exit fzf without selecting a config, don't open Neovim
+  [[ -z $config ]] && echo "No config selected" && return
+
+  # Open Neovim with the selected config
+  NVIM_APPNAME=$(basename $config) nvim $@
+}
 
 if command -v mise &> /dev/null; then
   alias m="mise"
@@ -40,6 +50,11 @@ alias yc="gpg-connect-agent 'scd serialno' 'learn --force' /bye"
 
 if command -v bat &> /dev/null; then
   alias view="bat"
+  alias less="bat --paging=always"
+fi
+
+if command -v rg &> /dev/null; then
+  alias grep="rg"
 fi
 
 # Change directory with fzf (renamed from fc to avoid conflict)
